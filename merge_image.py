@@ -22,7 +22,7 @@ def main(args, config):
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
     merger.save_merged_image(OUTPUT_DIRECTORY+"/"+OUTPUT_FILENAME)
-    print("\nelapsed time:",time.time()-s_time,"seconds")
+    print("elapsed time:",time.time()-s_time,"seconds")
     if ENABLE_VISUALIZATION:
         merger.start_merge_process_animation(ANIMATION_INTERVAL)
 
