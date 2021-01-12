@@ -5,8 +5,7 @@ slices image randomly and re-assemble them back to original image
 
 
 ### external dependencies
-numpy
-cv2
+numpy, cv2
 
 ## Execution guide
 #### slice and randomly transform image
