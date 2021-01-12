@@ -9,12 +9,14 @@ cv2
 ## Execution guide
 #### slice and randomly transform image
 ```sh
-cut_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix}
+cut_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [OPTION]
 ```
+OPTION -v: enable console log</br>
 #### re-assemble image fragments back to original image
 ```sh
-merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
+merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [OPTION]
 ```
+OPTION -v: enable console log and show merge animation<br/>
 #### quick testrun with animations
 ```sh
 ./run_automated_test.sh
