@@ -1,11 +1,10 @@
 # Jigsaw Puzzle Solver
-slices image randomly and re-assemble them back to original image
-
-
-
+slices image randomly and re-assemble them back to original image<br />
+<br /><br /><br />
 
 ### external dependencies
-numpy, cv2
+numpy,<br />
+cv2
 
 ## Execution guide
 #### slice and randomly transform image
@@ -31,16 +30,15 @@ merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 | `animation_interval_millis` | milliseconds interval between each merge step in animation |
 
 ## image assembly algorithm
-1. place all images in a queue.
-  2. start with a empty 'board' and paste random image at (r=0, c=0)
-  2. while queue is not empty:
-      2-1. for all possible position for any image to be pasted:
-          2-1-1. find best-fit image, and its transformation and location
-                  in accordance to similarity matrix
-          2-1-2. save local best-fit image to cache
-      2-2. paste best-fit image to the 'board'
-      2-3. remove image from queue
-  3. construct final image
+1. place all images in a queue.<br />
+&nbsp;&nbsp;2. start with a empty 'board' and paste random image at (r=0, c=0)<br />
+&nbsp;&nbsp;2. while queue is not empty:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-1. for all possible position for any image to be pasted:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-1-1. find best-fit image, and its transformation and location in accordance to similarity matrix<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-1-2. save local best-fit image to cache<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-2. paste best-fit image to the 'board'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-3. remove image from queue<br />
+3. construct final image<br />
 
 ## optimization techniques
 - preprocessed all-pairs image border similarity metric
