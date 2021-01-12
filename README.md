@@ -24,7 +24,7 @@ merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 
 ## config.ini
 | Key | Description |
-| --- | --- |
+| :---: | --- |
 | `images_dir` | directory to save fragmented (sliced and randomly transformed) images |
 | `output_dir` | directory to save final merged image |
 | `debug` | enable console logging |
