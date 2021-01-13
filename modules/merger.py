@@ -112,9 +112,8 @@ class ImageMerger:
                 if (i == j):
                     continue
                 for k in range(len(self.sim_matrix[i][j])):
-                    sim = im_op.img_borders_similarity(img_cells_norm[j][(k%epoch)%t_cnt],
+                    self.sim_matrix[i][j][k] = im_op.img_borders_similarity(img_cells_norm[j][(k%epoch)%t_cnt],
                                             img_cells_norm[i][k//epoch], (k%epoch)//t_cnt)
-                    self.sim_matrix[i][j][k] = sim
         print("preprocessing:",time.time()-s_time,"seconds")
 
     """
@@ -168,16 +167,11 @@ class ImageMerger:
     """
     finds single adjacent active cell.
     """
-    def adjacent_active_cell(self, cblock, i, j):
-        if (i+1 < len(cblock) and cblock[i+1][j][0] >= 0):
-            return {"dir":DIR['d'], "id":cblock[i+1][j][0], "transform":cblock[i+1][j][1]}
-        if (i-1 > 0 and cblock[i-1][j][0] >= 0):
-            return {"dir":DIR['u'], "id":cblock[i-1][j][0], "transform":cblock[i-1][j][1]}
-        if (j+1 < len(cblock[0]) and cblock[i][j+1][0] >= 0):
-            return {"dir":DIR['r'], "id":cblock[i][j+1][0], "transform":cblock[i][j+1][1]}
-        if (j-1 > 0 and cblock[i][j-1][0] >= 0):
-            return {"dir":DIR['l'], "id":cblock[i][j-1][0], "transform":cblock[i][j-1][1]}
-        return None
+    def adjacent_to_active_cell(self, cblock, i, j):
+        return ((i+1 < len(cblock) and cblock[i+1][j][0] >= 0) or
+                (i-1 > 0 and cblock[i-1][j][0] >= 0) or
+                (j+1 < len(cblock[0]) and cblock[i][j+1][0] >= 0) or
+                (j-1 > 0 and cblock[i][j-1][0] >= 0))
 
     """
     validate whether cellblock size is within bounds.
@@ -275,8 +269,7 @@ class ImageMerger:
             for i in range(len(self.merge_cellblock)):
                 for j in range(len(self.merge_cellblock)):
                     # check if cell can be activated
-                    if (self.merge_cellblock[i][j][0] == -1
-                        and self.adjacent_active_cell(self.merge_cellblock, i, j) != None):
+                    if self.merge_cellblock[i][j][0] == -1 and self.adjacent_to_active_cell(self.merge_cellblock, i, j):
                         cellblock_temp = np.copy(self.merge_cellblock)
                         cellblock_temp[i][j] = [1, 1]
 
