@@ -1,26 +1,27 @@
 # Jigsaw Puzzle Solver
 slices image randomly and re-assemble them back to original image<br />
-<br /><br /><br />
+<br />
 
-### external dependencies
-numpy,<br />
-cv2
+#### external dependencies
+numpy, cv2
 
 ## Execution guide
-#### slice and randomly transform image
+### Quickstart: quick demo with animations
+```sh
+./run_automated_test_animated.sh
+```
+</br>
+#### cut_image.py: slice and randomly transform image
 ```sh
 cut_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [OPTION]
 ```
-OPTION -v: enable console log</br>
-#### re-assemble image fragments back to original image
+[OPTION] -v: *enable console log*</br>
+#### merge_image.py: re-assemble image fragments back to original image
 ```sh
 merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [OPTION]
 ```
-OPTION -v: enable console log and show merge animation<br/>
-#### quick testrun with animations
-```sh
-./run_automated_test.sh
-```
+[OPTION] -v: *enable console log and show merge animation*<br/>
+
 
 ## config.ini
 | Key | Description |
@@ -33,14 +34,13 @@ OPTION -v: enable console log and show merge animation<br/>
 
 ## image assembly algorithm
 1. place all images in a queue.<br />
-2. start with a empty 'board' and paste random image at (r=0, c=0)<br />
+2. start with a empty 'board' and paste random image at center.<br />
 3. while queue is not empty:<br />
-&nbsp;&nbsp;&nbsp;&nbsp;3-1. for all possible position for any image to be pasted:<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3-1-1. find best-fit image, and its transformation and location in accordance to similarity matrix<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3-1-2. save local best-fit image to cache<br />
-&nbsp;&nbsp;&nbsp;&nbsp;3-2. paste best-fit image to the 'board'<br />
-&nbsp;&nbsp;&nbsp;&nbsp;3-3. remove image from queue<br />
-4. construct final image<br />
+&nbsp;&nbsp;&nbsp;&nbsp;3-1. for all possible 'board' locations (x,y) :<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3-1-1. find best-fit image and orientation pair I(x,y) = (img, orientation, score) at each position<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*3-1-2. (optimization) save best-fit image to cache*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;3-2. paste best-fit image, img = argmax(I(score)) to the 'board'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;3-3. remove image i from the queue<br />
 
 ## optimization techniques
 - preprocessed all-pairs image border similarity metric
