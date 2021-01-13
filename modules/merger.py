@@ -29,9 +29,8 @@ class ImageMerger:
         self.cols = cols # as specified in args
         self.rows = rows # as specified in args
         if (self.t_count == 8):
-            self.sim_matrix = np.zeros((len(self.img_cells), len(self.img_cells), 256))
-            #self.map = opt.map8 # currently buggy
-            self.map = opt.map8_accurate # similarity matrix index mapper (rotation, flip, mirror)
+            self.sim_matrix = np.zeros((len(self.img_cells), len(self.img_cells), 32))
+            self.map = opt.map8
         else:
             self.sim_matrix = np.zeros((len(self.img_cells), len(self.img_cells), 16))
             self.map = opt.map4 # similarity matrix index mapper (flip, mirror)
@@ -123,8 +122,7 @@ class ImageMerger:
     """
     def construct_similaritymatrix_parallel(self, img_cells_norm, t_count):
         matrix_depth = len(self.sim_matrix[0][0])
-        if (t_count < 8 and len(self.img_cells) < opt.SWITCH_TO_PARALLEL_THRESHOLD
-            or t_count >=8 and len(self.img_cells) < opt.SWITCH_TO_PARALLEL_THRESHOLD/4):
+        if len(self.img_cells) < opt.SWITCH_TO_PARALLEL_THRESHOLD * 4 / t_count:
             return False
         try:
             s_time = time.time()

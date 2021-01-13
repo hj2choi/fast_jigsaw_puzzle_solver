@@ -50,7 +50,6 @@ OPTION -v: enable console log and show merge animation<br/>
 
 ## TODO
 - too much I/O overhead when creating process. Need to do something about python's Global Interpreter Lock.
-- performance drastically decreases when fragmented images are square shaped. Need to compute 256-dimension orientation mapping table
 - exploiting diagonality property of distance matrix might open a room for further optimization
 
 ### references

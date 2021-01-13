@@ -7,7 +7,6 @@ MAX_PROCESS_COUNT = 3
 SWITCH_TO_PARALLEL_THRESHOLD = 128 # number of images
 
 """
-@TODO 최적화 사용 시, 정사각형 이미지 매핑할때 특정 상황에서 이미지가 잘못된 orientation으로 붙음.
 @TODO similarity matrix의 diagonality 성질 이용해서 최대 2배 최적화 가능한지 확인.
 
 similarity matrix index 매핑 (속도 최대 4~8x 상승)
@@ -28,75 +27,33 @@ tgt가 고정되지 않고 transform 하면
 
 아래는 tgt의 transformation 상태에 따라 similarity matrix의 index를 매핑하는 코드.
 """
-MAPPING_TABLE8 = []
+MAPPING_TABLE8 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+                27, 24, 25, 26, 31, 28, 29, 30, 19, 16, 17, 18, 23, 20, 21, 22, 3, 0, 1, 2, 7, 4, 5, 6, 11, 8, 9, 10, 15, 12, 13, 14,
+                10, 11, 8, 9, 14, 15, 12, 13, 2, 3, 0, 1, 6, 7, 4, 5, 26, 27, 24, 25, 30, 31, 28, 29, 18, 19, 16, 17, 22, 23, 20, 21,
+                17, 18, 19, 16, 21, 22, 23, 20, 25, 26, 27, 24, 29, 30, 31, 28, 9, 10, 11, 8, 13, 14, 15, 12, 1, 2, 3, 0, 5, 6, 7, 4,
+                12, 15, 14, 13, 8, 11, 10, 9, 4, 7, 6, 5, 0, 3, 2, 1, 20, 23, 22, 21, 16, 19, 18, 17, 28, 31, 30, 29, 24, 27, 26, 25,
+                29, 28, 31, 30, 25, 24, 27, 26, 21, 20, 23, 22, 17, 16, 19, 18, 13, 12, 15, 14, 9, 8, 11, 10, 5, 4, 7, 6, 1, 0, 3, 2,
+                6, 5, 4, 7, 2, 1, 0, 3, 14, 13, 12, 15, 10, 9, 8, 11, 30, 29, 28, 31, 26, 25, 24, 27, 22, 21, 20, 23, 18, 17, 16, 19,
+                23, 22, 21, 20, 19, 18, 17, 16, 31, 30, 29, 28, 27, 26, 25, 24, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8]
 
 def generate_mapping_table8(sim_matrix):
     mapping_table = []
-
     for i in range(len(sim_matrix[0][1])):
+        flag = 0
         for j in range(32):
-            print(i,j,"=>",sim_matrix[0][1][i],sim_matrix[0][1][j], end="")
-            if (np.abs(sim_matrix[0][1][i] - sim_matrix[0][1][j]) < 0.0000001):
-                print(" match")
-                mapping_table.append(j)
-            else:
-                print()
+            print(i,j,"=>",sim_matrix[0][2][i],sim_matrix[0][2][j], end="")
+            if (np.abs(sim_matrix[0][2][i] - sim_matrix[0][2][j]) < 0.0000001):
+                if not flag:
+                    print(" match", end="")
+                    flag = 1
+                    mapping_table.append(j)
+                else:
+                    print("\n SOMETHING's WRONG")
+                    return
+            print()
+        print()
 
     print(mapping_table)
-
-def unit_test_mapping8():
-    print("Transformation mapper TEST")
-    flag = 1
-    for i in range(32):
-        if (i != t_rot(t_rot(t_rot(t_rot(i))))):
-            flag = 0
-            print("rotation identity test: [FAILED]")
-            break
-    if flag:
-        print("rotation identity test: [PASSED]")
-
-    for i in range(32):
-        if (i != t_flip(t_flip(i))):
-            flag = 0
-            print("flip identity test: [FAILED]")
-            break
-    if flag:
-        print("flip identity test: [PASSED]")
-
-    for i in range(32):
-        if (t_rot(t_flip(t_flip(i))) != t_flip(t_flip(t_rot(i)))):
-            flag = 0
-            print("commutative property test: [FAILED]")
-            break
-    if flag:
-        print("commutative property test: [PASSED]")
-
-'''
-ex)
-[0~7] => [24~31] =>
-[27 24 25 26,
-29 30 31 28]
-'''
-def t_rot(i):
-    i -= 16
-    if i < 0:
-        if i < -8:
-            i += 16
-        i += 24
-    return i - i%4 + (i%4 + 3 + ((i//4)%4)*2)%4
-
-'''
-ex)
-[0~7] => [8~15]=>
-[12 13 14 15,
-8 9 10 11]
-'''
-def t_flip(i):
-    if i < 16:
-        j = i+((i//8+1)%2)*16-8
-        return j - j%8 + ((j%8)+4)%8
-    else:
-        return i-((i%8)//4)*8+4
 
 '''
 rotation 없이 오직 flip만 사용할 시 mapping table
@@ -112,14 +69,7 @@ ex)
 1: rot(90, img), 2: rot(180, img), 4: rot(0, flip(img))
 '''
 def map8(t_transform, s_transform):
-    if t_transform >= 4:
-        s_transform = t_flip(s_transform)
-    for i in range(t_transform % 4):
-        s_transform = t_rot(s_transform)
-    return s_transform
-
-def map8_accurate(t_transform, s_transform):
-    return t_transform*8*4 + s_transform
+    return MAPPING_TABLE8[t_transform*8*4 + s_transform]
 
 '''
 flip, mirror only
