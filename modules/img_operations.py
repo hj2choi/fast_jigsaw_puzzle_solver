@@ -15,13 +15,9 @@ compares two images and evaluates whether two borders can be stitched seamlessly
 idea 1: use simple RMSE around two image borders
         skip pixels for optimization
         similarity = 1/(1+distance)
-
-idea 2: compute colors around border of both sides.
+idea 2: compute colors around border of both sides. by applying Sobel filter
         use RMSE with weights for distance measure.
-
-idea 3: use Mahalanobis Gradient Compatability (MGC)
-[ref] Andrew C Gallagher. Jigsaw puzzles with pieces of unknown orientation. In CVPR 2012
-[ref2] Sobel filter
+idea 3: use Mahalanobis Gradient Compatability (MGC) Andrew C Gallagher in CVPR 2012
 
 @Parameters
 img1 (npArray):     raw image (h, w, RGB_256)

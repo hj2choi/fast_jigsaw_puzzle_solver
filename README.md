@@ -28,28 +28,28 @@ OPTION -v: enable console log and show merge animation<br/>
 | `images_dir` | directory to save fragmented (sliced and randomly transformed) images |
 | `output_dir` | directory to save final merged image |
 | `debug` | enable console logging |
-| `enable_merge_visualization` | enable step by step merge animation |
+| `enable_merge_visualization` | show merging animation |
 | `animation_interval_millis` | milliseconds interval between each merge step in animation |
 
 ## image assembly algorithm
 1. place all images in a queue.<br />
-&nbsp;&nbsp;2. start with a empty 'board' and paste random image at (r=0, c=0)<br />
-&nbsp;&nbsp;2. while queue is not empty:<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-1. for all possible position for any image to be pasted:<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-1-1. find best-fit image, and its transformation and location in accordance to similarity matrix<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-1-2. save local best-fit image to cache<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-2. paste best-fit image to the 'board'<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-3. remove image from queue<br />
-3. construct final image<br />
+2. start with a empty 'board' and paste random image at (r=0, c=0)<br />
+3. while queue is not empty:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;3-1. for all possible position for any image to be pasted:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3-1-1. find best-fit image, and its transformation and location in accordance to similarity matrix<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3-1-2. save local best-fit image to cache<br />
+&nbsp;&nbsp;&nbsp;&nbsp;3-2. paste best-fit image to the 'board'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;3-3. remove image from queue<br />
+4. construct final image<br />
 
 ## optimization techniques
 - preprocessed all-pairs image border similarity metric
 - used cache mechanism to minimize redundant computation.
 - used parallel processing (multi-processing) when heavy load of computation is required
-- used index mapping table for looking up similarity score for each image orientation and stitching directions
+- used index mapping table for looking up similarity score for each orientation and stitching directions
 
 ## TODO
-- minimize I/O overhead when forking processes. Need to go around python's Global Interpreter Lock.
+- too much I/O overhead when creating process. Need to do something about python's Global Interpreter Lock.
 - performance drastically decreases when fragmented images are square shaped. Need to compute 256-dimension orientation mapping table
 - exploiting diagonality property of distance matrix might open a room for further optimization
 

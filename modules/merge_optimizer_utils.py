@@ -111,7 +111,7 @@ def t_flip4(i):
 ex)
 1: rot(90, img), 2: rot(180, img), 4: rot(0, flip(img))
 '''
-def map8_deprecated(t_transform, s_transform):
+def map8(t_transform, s_transform):
     if t_transform >= 4:
         s_transform = t_flip(s_transform)
     for i in range(t_transform % 4):

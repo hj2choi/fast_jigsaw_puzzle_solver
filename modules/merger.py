@@ -21,13 +21,13 @@ class ImageMerger:
     @usage
     mr = mr.ImageMerger.loadfromfilepath(args, ...)
     """
-    def __init__(self, data = [], cols = 0, rows = 0, preprocess = True):
+    def __init__(self, data = [], cols = 0, rows = 0):
         self.img_cells = data # image segments with all combination of transformations
         self.t_count = len(self.img_cells[0]) # number of possible transformation states
         self.cell_id_queue = np.arange(0,len(self.img_cells))# list of segments to be processed
         self.merge_cellblock = (np.zeros((max(rows, cols)*2,max(rows, cols)*2,2))-1).astype(int)  # blueprint for image reconstruction
-        self.cols = cols # as specified in args*
-        self.rows = rows # as specified in args*
+        self.cols = cols # as specified in args
+        self.rows = rows # as specified in args
         if (self.t_count == 8):
             self.sim_matrix = np.zeros((len(self.img_cells), len(self.img_cells), 256))
             #self.map = opt.map8 # currently buggy
@@ -35,10 +35,8 @@ class ImageMerger:
         else:
             self.sim_matrix = np.zeros((len(self.img_cells), len(self.img_cells), 16))
             self.map = opt.map4 # similarity matrix index mapper (flip, mirror)
-        self.merged_image = []
-        self.merge_history = []
-        if preprocess:
-            self.construct_similaritymatrix()
+        self.merged_image = [] # final reassembled image
+        self.merge_history = [] # used for animation
 
     """
     load data from given program arguments
@@ -64,9 +62,6 @@ class ImageMerger:
                                         np.flip(img, 0),
                                         np.flip(np.flip(img, 0), 1)
                                         ])
-        print(len(img_cells),"files loaded from",dir)
-        if (rows*cols != len(img_cells)):
-            print("ERROR: CELL DIMENSION DO NOT MATCH. PROCEEDING ANYWAYS...")
         return cls(img_cells, cols, rows)
 
     """
@@ -100,45 +95,15 @@ class ImageMerger:
 
 
     """
-    construct similarity matrix for preprocessing.
-    records similarity for all image pairs, while considering all combination of stitching directions and transformations.
-
-    4x ~ 8x transformations, 4x stitching directions = 16 ~ 32
+    construct similarity matrix for merge algorithm.
+    records similarity for all image pairs, while considering all combination of stitching directions and orientations.
     shape of similarity matrix = (row, col, 16~32)
-    """
-
-    """
-    construct similarity matrix in parallel
-    @Private
-    """
-    def construct_similaritymatrix_parallel(self, img_cells_norm, t_count):
-        matrix_depth = len(self.sim_matrix[0][0])
-        if (t_count < 8 and len(self.img_cells) < opt.SWITCH_TO_PARALLEL_THRESHOLD
-            or t_count >=8 and len(self.img_cells) < opt.SWITCH_TO_PARALLEL_THRESHOLD/4):
-            return False
-        s_time = time.time()
-        try:
-            with Pool(opt.MAX_PROCESS_COUNT, opt.init_process, (np.array(img_cells_norm),t_count)) as pool:
-                print("\nparallel preprocessing overhead:",time.time()-s_time,"seconds")
-                s_time = time.time()
-                self.sim_matrix = np.reshape(pool.map(opt.elementwise_similarity_parallel,
-                                                    np.ndenumerate(np.copy(self.sim_matrix))),
-                                                    (len(self.img_cells), len(self.img_cells),matrix_depth))
-            print("parallel preprocessing elapsed time:",time.time()-s_time,"seconds")
-            return True
-        except Exception as e:
-            print("Failed to start process")
-            print(e)
-            return False
-        return False
-
-    """
-    construct matrix in serial
     """
     def construct_similaritymatrix(self):
         t_cnt = self.t_count
         epoch = t_cnt * 4
         img_cells_norm = np.array(self.img_cells)/256
+        # try running in parallel
         if (self.construct_similaritymatrix_parallel(img_cells_norm, t_cnt)):
             return
 
@@ -151,7 +116,33 @@ class ImageMerger:
                     sim = im_op.img_borders_similarity(img_cells_norm[j][(k%epoch)%t_cnt],
                                             img_cells_norm[i][k//epoch], (k%epoch)//t_cnt)
                     self.sim_matrix[i][j][k] = sim
-        print("serial preprocessing elapsed time:",time.time()-s_time,"seconds")
+        print("preprocessing:",time.time()-s_time,"seconds")
+
+    """
+    construct similarity matrix in parallel
+    """
+    def construct_similaritymatrix_parallel(self, img_cells_norm, t_count):
+        matrix_depth = len(self.sim_matrix[0][0])
+        if (t_count < 8 and len(self.img_cells) < opt.SWITCH_TO_PARALLEL_THRESHOLD
+            or t_count >=8 and len(self.img_cells) < opt.SWITCH_TO_PARALLEL_THRESHOLD/4):
+            return False
+        try:
+            s_time = time.time()
+            # create child process
+            with Pool(opt.MAX_PROCESS_COUNT, opt.init_process, (np.array(img_cells_norm),t_count)) as pool:
+                print("\parallellized preprocessing I/O overhead:",time.time()-s_time,"seconds")
+                s_time = time.time()
+                # map every element in similarity matrix
+                self.sim_matrix = np.reshape(pool.map(opt.elementwise_similarity_parallel,
+                                                    np.ndenumerate(np.copy(self.sim_matrix))),
+                                                    (len(self.img_cells), len(self.img_cells),matrix_depth))
+            print("parallellized preprocessing:",time.time()-s_time,"seconds")
+            return True
+        except Exception as e:
+            print("Failed to start process")
+            print(e)
+            return False
+        return False
 
     """
     finds all adjacent active cells. (active cell: cell with id >= 0)
@@ -215,7 +206,7 @@ class ImageMerger:
         return (rt-rs < rows and ct-cs < cols) or (rt-rs < cols and ct-cs < rows)
 
     """
-    clean cache for optimization
+    cleanup and update cache
     """
     def clean_cellblock_cache(self, cache, i, j, removed_id):
         if j+1 < len(cache[0]): cache[i][j+1] = None
@@ -233,18 +224,17 @@ class ImageMerger:
     def best_fit_image_at(self, i, j, cellblock_temp):
         t_cnt = self.t_count
 
-        adj = self.adjacent_active_cell(self.merge_cellblock, i, j)
+        adj_list = self.adjacent_active_cells(self.merge_cellblock, i, j)
         local_best_merge = {"next_cblock": cellblock_temp, "id":-1, "transform": 0, "score": -np.inf, "pos": (-1,-1)}
         for id in self.cell_id_queue: # for all images in queue
-            for k in range(t_cnt*adj["dir"], t_cnt*adj["dir"]+t_cnt): # for all transformations
-            #for k in range(adj["transform"]*32+8*adj["dir"], adj["transform"]*32+8*adj["dir"]+8):
-                score = self.sim_matrix[adj["id"]][id][self.map(adj["transform"], k)]
-                #score = self.sim_matrix[adj["id"]][id][k]
+            for adj in adj_list: # for all adjacent images
+                for k in range(t_cnt*adj["dir"], t_cnt*adj["dir"]+t_cnt): # for all transformations
+                    score = self.sim_matrix[adj["id"]][id][self.map(adj["transform"], k)]
 
-                if (local_best_merge["id"]==-1 or local_best_merge["score"]<score):
-                    cellblock_temp[i][j] = [id, k%t_cnt]
-                    local_best_merge = {"next_cblock":cellblock_temp,
-                                    "id":id, "transform":k%t_cnt, "score":score, "pos": (i,j)}
+                    if (local_best_merge["id"]==-1 or local_best_merge["score"]<score):
+                        cellblock_temp[i][j] = [id, k%t_cnt]
+                        local_best_merge = {"next_cblock":cellblock_temp,
+                                        "id":id, "transform":k%t_cnt, "score":score, "pos": (i,j)}
         return local_best_merge
 
     """
@@ -261,16 +251,16 @@ class ImageMerger:
         2-3. remove image from queue
     3. construct final image
 
+    cache 이용한 최적화. (속도 최대 2x 상승)
+    이미 최대 similarity값을 찾은 위치에 대해서는
+    캐시에서 불러와서 반복적인 연산 최소화.
+
     @Requirements:
     sim_matrix (npArray):   similarity matrix for all image pairs.
                             similarity for all possible transformations and stitching directions should be pre-computed
     """
-    """""
-    cache 이용한 최적화. (속도 최대 2x 상승)
-    이미 최대 similarity값을 찾은 위치에 대해서는
-    캐시에서 불러와서 반복적인 연산 최소화.
-    """""
     def merge(self):
+        self.construct_similaritymatrix()
         s_time = time.time()
         t_cnt = self.t_count
         self.merge_cellblock[self.rows][self.cols].fill(int(0))
@@ -283,6 +273,7 @@ class ImageMerger:
                             "id":-1, "transform":0, "score":-np.inf, "pos":(-1,-1)}
 
             iteration_time = time.time()
+            # for all possible positions
             for i in range(len(self.merge_cellblock)):
                 for j in range(len(self.merge_cellblock)):
                     # check if cell can be activated
@@ -316,7 +307,7 @@ class ImageMerger:
             self.merge_cellblock = best_merge["next_cblock"]
             self.merge_history.append(best_merge)
             self.clean_cellblock_cache(cellblock_cache, best_merge["pos"][0], best_merge["pos"][1], best_merge["id"])
-            print("best-fit image: id =", best_merge["id"],
+            print("image merged: id =", best_merge["id"],
                     "t =", best_merge["transform"], "score=", np.round(best_merge["score"],4),"\t",
                     self.rows*self.cols-len(self.cell_id_queue), "/", self.rows*self.cols)
             #print(time.time() - iteration_time,"secs")
