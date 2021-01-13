@@ -34,7 +34,6 @@ class ImageMerger:
         else:
             self.sim_matrix = np.zeros((len(self.img_cells), len(self.img_cells), 16))
             self.map = opt.map4 # similarity matrix index mapper (flip, mirror)
-        self.merged_image = [] # final reassembled image
         self.merge_history = [] # used for animation
 
     """
@@ -68,26 +67,36 @@ class ImageMerger:
     """
     def save_merged_image(self, filepath):
         # assemble image as specifed in cellblock blueprint
+        cellblock = self.merge_cellblock
         t_cnt = self.t_count
-        self.merged_image = []
-        for i in range(len(self.merge_cellblock)):
-            line = []
-            for j in range(len(self.merge_cellblock[0])):
-                if (self.merge_cellblock[i][j][0] > -1):
-                    idx = self.merge_cellblock[i][j]
-                    if (len(line) == 0):
-                        line = np.array(self.img_cells[idx[0]][idx[1] % t_cnt])
-                    else:
-                        line = np.concatenate((line, self.img_cells[idx[0]][idx[1] % t_cnt]), axis = 1)
-            if (len(self.merged_image) == 0 and len(line) != 0):
-                self.merged_image = np.array(line)
-            elif len(line) != 0:
-                self.merged_image = np.concatenate((self.merged_image, line))
-
-        if len(self.merged_image) == 0:
+        rt, ct, rs, cs = 0, 0, len(cellblock), len(cellblock[0])
+        for i in range(len(cellblock)):
+            for j in range(len(cellblock[0])):
+                if cellblock[i][j][0] > -1:
+                    if i < rs: rs = i
+                    if i > rt: rt = i
+                    if j < cs: cs = j
+                    if j > ct: ct = j
+        if rt - rs + 1 < 1 or ct - cs + 1 < 1:
             print("ERROR: MERGED IMAGE DO NOT EXIST.")
             return
-        cv2.imwrite(filepath+".png", self.merged_image)
+        cell_h = len(self.img_cells[0][0])
+        cell_w = len(self.img_cells[0][0][0])
+        cellblock_h = (rt - rs + 1)*cell_h
+        cellblock_w = (ct - cs + 1)*cell_w
+
+        whiteboard = np.zeros((cellblock_h, cellblock_w, 3), dtype = np.uint8)
+        whiteboard.fill(0)
+        for i in range(len(cellblock)):
+            for j in range(len(cellblock[0])):
+                if (cellblock[i][j][0] > -1):
+                    idx = cellblock[i][j]
+                    paste = self.img_cells[idx[0]][idx[1] % t_cnt]
+                    y_offset = (i-rs)*cell_h
+                    x_offset = (j-cs)*cell_w
+                    whiteboard[y_offset:y_offset+cell_h, x_offset:x_offset+cell_w] = paste
+
+        cv2.imwrite(filepath+".png", whiteboard)
 
     def start_merge_process_animation(self, interval):
         vis.start_merge_process_animation(self.merge_history, self.img_cells, self.rows, self.cols, self.t_count, interval_millis = interval)

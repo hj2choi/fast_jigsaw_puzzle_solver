@@ -17,3 +17,5 @@ python merge_image.py test4 4 1 out4
 python merge_image.py test5 2 2 out5
 python merge_image.py test6 12 14 out6
 python merge_image.py test7 7 7 out7
+python merge_image.py test3 4 5 out8 # error case 1
+python merge_image.py test3 2 2 out9 # error case 2

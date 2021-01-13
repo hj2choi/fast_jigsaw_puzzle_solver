@@ -14,3 +14,5 @@ python merge_image.py test4 4 1 out4 -v
 python merge_image.py test5 2 2 out5 -v
 python merge_image.py test6 12 14 out6 -v
 python merge_image.py test7 7 7 out7 -v
+python merge_image.py test3 4 5 out8 -v # error case 1
+python merge_image.py test3 2 2 out9 -v # error case 2
