@@ -57,9 +57,10 @@ def start_merge_process_animation(merge_history, img_cells, rows, cols, t_cnt, w
     init_cellblock = np.copy(merge_history[0]["next_cblock"])
     init_cellblock.fill(-1)
     init_cellblock[rows][cols].fill(int(0))
-    display_from_cellblock({"next_cblock":init_cellblock, "score":1.0}, img_cells, rows, cols, t_cnt, windowlock,interval_millis)
+    display_from_cellblock({"next_cblock":init_cellblock, "score":1.0, "id":0, "dir":0}, img_cells, rows, cols, t_cnt, windowlock,interval_millis)
     for i in range(len(merge_history)-1):
         display_from_cellblock(merge_history[i], img_cells, rows, cols, t_cnt, windowlock,interval_millis)
+    merge_history[-1]["dir"] = -1
     display_from_cellblock(merge_history[-1], img_cells, rows, cols, t_cnt, True,interval_millis)
 
 """
@@ -67,6 +68,8 @@ construct image from cellblock and visualize
 """
 def display_from_cellblock(merge, img_cells, rows, cols, t_cnt, windowlock = False, interval_millis = 500):
     cellblock = merge["next_cblock"]
+    merge_id = merge["id"]
+    merge_dir = merge["dir"]
     rt, ct, rs, cs = 0, 0, len(cellblock), len(cellblock[0])
     for i in range(len(cellblock)):
         for j in range(len(cellblock[0])):
@@ -76,6 +79,8 @@ def display_from_cellblock(merge, img_cells, rows, cols, t_cnt, windowlock = Fal
                 if j < cs: cs = j
                 if j > ct: ct = j
 
+    max_h = 768
+    max_w = 1024
     cell_h = len(img_cells[0][0])
     cell_w = len(img_cells[0][0][0])
     window_h = rows * cell_h + cell_h*2
@@ -84,6 +89,7 @@ def display_from_cellblock(merge, img_cells, rows, cols, t_cnt, windowlock = Fal
     cellblock_w = (ct - cs + 1)*cell_w
     start_h = (window_h - cellblock_h) // 2
     start_w = (window_w - cellblock_w) // 2
+    scale = min(max_h/window_h, max_w/window_w)
 
     whiteboard = np.zeros((window_h, window_w, 3), dtype = np.uint8)
     whiteboard.fill(255)
@@ -97,11 +103,16 @@ def display_from_cellblock(merge, img_cells, rows, cols, t_cnt, windowlock = Fal
                 y_offset = start_h+(i-rs)*cell_h
                 x_offset = start_w+(j-cs)*cell_w
                 whiteboard[y_offset:y_offset+cell_h, x_offset:x_offset+cell_w] = paste
+                if cellblock[i][j][0] == merge_id:
+                    if merge_dir == 0:
+                        cv2.line(whiteboard,(x_offset,y_offset+cell_h),(x_offset+cell_w,y_offset+cell_h),(0,0,255),int(2/scale))
+                    elif merge_dir == 1:
+                        cv2.line(whiteboard,(x_offset,y_offset),(x_offset+cell_w,y_offset),(0,0,255),int(2/scale))
+                    elif merge_dir == 2:
+                        cv2.line(whiteboard,(x_offset+cell_w,y_offset),(x_offset+cell_w,y_offset+cell_h),(0,0,255),int(2/scale))
+                    elif merge_dir == 3:
+                        cv2.line(whiteboard,(x_offset,y_offset),(x_offset,y_offset+cell_h),(0,0,255),int(2/scale))
 
-
-    max_h = 768
-    max_w = 1024
-    scale = min(max_h/window_h, max_w/window_w)
     whiteboard = cv2.resize(whiteboard, (int(window_w*scale), int(window_h*scale)))
     whiteboard = cv2.copyMakeBorder( whiteboard, 0, 100, 0, 0, cv2.BORDER_CONSTANT)
     whiteboard = cv2.putText(whiteboard, "similarity score ="+str(merge["score"]), (30, len(whiteboard)-50), fontFace = cv2.LINE_AA, fontScale = 0.5, color = (255,255,255))

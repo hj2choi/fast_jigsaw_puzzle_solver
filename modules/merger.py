@@ -223,7 +223,7 @@ class ImageMerger:
         t_cnt = self.t_count
 
         adj_list = self.adjacent_active_cells(self.merge_cellblock, i, j)
-        local_best_merge = {"next_cblock": cellblock_temp, "id":-1, "transform": 0, "score": -np.inf, "pos": (-1,-1)}
+        local_best_merge = {"next_cblock": cellblock_temp, "id":-1, "transform": 0, "score": -np.inf, "dir":0, "pos": (-1,-1)}
         for id in self.cell_id_queue: # for all images in queue
             for adj in adj_list: # for all adjacent images
                 for k in range(t_cnt*adj["dir"], t_cnt*adj["dir"]+t_cnt): # for all transformations
@@ -232,7 +232,7 @@ class ImageMerger:
                     if (local_best_merge["id"]==-1 or local_best_merge["score"]<score):
                         cellblock_temp[i][j] = [id, k%t_cnt]
                         local_best_merge = {"next_cblock":cellblock_temp,
-                                        "id":id, "transform":k%t_cnt, "score":score, "pos": (i,j)}
+                                        "id":id, "transform":k%t_cnt, "score":score, "dir":adj["dir"], "pos": (i,j)}
         return local_best_merge
 
     """
@@ -268,7 +268,7 @@ class ImageMerger:
 
         while len(self.cell_id_queue) > 0:
             best_merge = {"next_cblock":np.copy(self.merge_cellblock),
-                            "id":-1, "transform":0, "score":-np.inf, "pos":(-1,-1)}
+                            "id":-1, "transform":0, "score":-np.inf, "dir":0, "pos":(-1,-1)}
 
             iteration_time = time.time()
             # for all possible positions
