@@ -80,14 +80,12 @@ def main(args, config):
         return
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
-
-    # divide image into segments and process each segment
     img = img[:len(img) - len(img) % CUT_ROWS, :len(img[0]) - len(img[0]) % CUT_COLS]
     print("cut_image.py: image loaded and trimmed (h =",img.shape[0],", w =",img.shape[1],")")
     if not VERBOSE and CUT_ROWS*CUT_COLS > 8:
         sys.stdout = open(os.devnull, 'w') # block stdout
 
-    # divide image into segments and process each segment
+    # sllice image into uniform shapes and process each segment
     h, w = len(img) // CUT_ROWS, len(img[0]) // CUT_COLS # height and width
     for i in range(CUT_ROWS):
         for j in range(CUT_COLS):

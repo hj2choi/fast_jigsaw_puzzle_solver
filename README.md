@@ -1,5 +1,5 @@
 # Jigsaw Puzzle Solver
-slices image randomly and re-assemble them back to original image<br />
+slices image and randomly randomly transforms individual slices. then, re-assemble them back to original image<br />
 <br />
 
 #### external dependencies
@@ -44,11 +44,14 @@ merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 
 ## optimization techniques
 - preprocessed all-pairs image border similarity metric
-- used cache mechanism to minimize redundant computation.
+- used hashmap to minimize search time
+- used cache mechanism to minimize redundant computation
 - used parallel processing (multi-processing) when heavy load of computation is required
 - used index mapping table for looking up similarity score for each orientation and stitching directions
 
 ## TODO
+- try switching some of the data structures to hashmap. cellblock and cellblock_cache require repetitive search. Hashmap can reduce search from O(row*col) to O(1).</br>
+  Also, turn cellblock into class object instead of using dictionary. *validate_cellblock()*, *clean_cellblock_cache()* should ideally run in O(1)
 - too much I/O overhead when creating process. Need to do something about python's Global Interpreter Lock.
 - exploiting diagonality property of distance matrix might open a room for further optimization
 

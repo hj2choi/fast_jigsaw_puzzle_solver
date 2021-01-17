@@ -2,6 +2,11 @@ import cv2
 import numpy as np
 from . import img_operations as im_op
 
+
+MAX_PIECES_WINDOW_SIZE = (280,400) # height, width
+#MAX_MERGE_ANIMATION_WINDOW_SIZE = (768, 1024) # height, width
+MAX_MERGE_ANIMATION_WINDOW_SIZE = (450, 750) # height, width
+
 """
 visualize image pair stitching at given orientation and stitching direction.
 """
@@ -64,9 +69,51 @@ def start_merge_process_animation(merge_history, img_cells, rows, cols, t_cnt, w
     display_from_cellblock(merge_history[-1], img_cells, rows, cols, t_cnt, True,interval_millis)
 
 """
+
+
+"""
+MERGED_ID_LIST = []
+def display_remaining_pieces(cellblock, img_cells, rows, cols, merge_id, windowlock = False, interval_millis = 500):
+    global MERGED_ID_LIST
+    MERGED_ID_LIST.append(merge_id)
+
+    max_h = MAX_PIECES_WINDOW_SIZE[0]
+    max_w = MAX_PIECES_WINDOW_SIZE[1]
+    cell_h = len(img_cells[0][0])
+    cell_w = len(img_cells[0][0][0])
+    window_h = int((rows * cell_h)*1.15)
+    window_w = int((cols * cell_w)*1.15)
+    start_h = 20
+    start_w = 20
+    scale = min(max_h/window_h, max_w/window_w)
+
+    whiteboard = np.zeros((window_h, window_w, 3), dtype = np.uint8)
+    whiteboard.fill(255)
+
+    for i in range(len(img_cells)):
+        for j in MERGED_ID_LIST:
+            if j == i:
+                break
+        else:
+            paste = img_cells[i][0]
+            y_offset = start_h+(i//cols)*int(cell_h*1.1)#+int(cell_h/10)
+            x_offset = start_w+(i%cols)*int(cell_w*1.1)#+int(cell_w/10)
+            whiteboard[y_offset:y_offset+cell_h, x_offset:x_offset+cell_w] = paste
+
+    whiteboard = cv2.resize(whiteboard, (int(window_w*scale), int(window_h*scale)))
+    cv2.imshow("remaining fragments", whiteboard)
+    #if windowlock:
+    #    cv2.waitKey(interval_millis*5)
+    #else:
+    #    cv2.waitKey(interval_millis)
+
+
+
+"""
 construct image from cellblock and visualize
 """
 def display_from_cellblock(merge, img_cells, rows, cols, t_cnt, windowlock = False, interval_millis = 500):
+    global MERGED_ID_LIST
     cellblock = merge["next_cblock"]
     merge_id = merge["id"]
     merge_dir = merge["dir"]
@@ -79,12 +126,12 @@ def display_from_cellblock(merge, img_cells, rows, cols, t_cnt, windowlock = Fal
                 if j < cs: cs = j
                 if j > ct: ct = j
 
-    max_h = 768
-    max_w = 1024
+    max_h = MAX_MERGE_ANIMATION_WINDOW_SIZE[0]
+    max_w = MAX_MERGE_ANIMATION_WINDOW_SIZE[1]
     cell_h = len(img_cells[0][0])
     cell_w = len(img_cells[0][0][0])
-    window_h = rows * cell_h + cell_h*2
-    window_w = cols * cell_w + cell_w*2
+    window_h = rows * cell_h + cell_h*1
+    window_w = cols * cell_w + cell_w*1
     cellblock_h = (rt - rs + 1)*cell_h
     cellblock_w = (ct - cs + 1)*cell_w
     start_h = (window_h - cellblock_h) // 2
@@ -116,8 +163,11 @@ def display_from_cellblock(merge, img_cells, rows, cols, t_cnt, windowlock = Fal
     whiteboard = cv2.resize(whiteboard, (int(window_w*scale), int(window_h*scale)))
     whiteboard = cv2.copyMakeBorder( whiteboard, 0, 100, 0, 0, cv2.BORDER_CONSTANT)
     whiteboard = cv2.putText(whiteboard, "similarity score ="+str(merge["score"]), (30, len(whiteboard)-50), fontFace = cv2.LINE_AA, fontScale = 0.5, color = (255,255,255))
-
-    cv2.imshow("current cellblock", whiteboard)
+    try:
+        display_remaining_pieces(cellblock, img_cells, rows, cols, merge["id"])
+    except:
+        pass
+    cv2.imshow("merge process", whiteboard)
     if windowlock:
         cv2.waitKey(interval_millis*5)
     else:
