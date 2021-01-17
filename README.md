@@ -10,7 +10,6 @@ numpy, cv2
 ```sh
 ./run_automated_test_animated.sh
 ```
-</br>
 #### cut_image.py: slice and randomly transform image
 ```sh
 cut_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [OPTION]
