@@ -6,7 +6,7 @@ slices image and randomly randomly transforms individual slices. then, re-assemb
 numpy, cv2
 
 ## Execution guide
-### Quickstart: quick demo with animations
+### Quickstart: quick demo with animation
 ```sh
 ./run_automated_test_animated.sh
 ```
@@ -43,7 +43,7 @@ merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 
 ## optimization techniques
 - preprocessed all-pairs image border similarity metric
-- used hashmap to minimize search time
+- used hashmap for O(1) search time
 - used cache mechanism to minimize redundant computation
 - used parallel processing (multi-processing) when heavy load of computation is required
 - used index mapping table for looking up similarity score for each orientation and stitching directions

@@ -18,7 +18,7 @@ def main(args, config):
     merger = mr.ImageMerger.loadfromfilepath(IMAGES_DIR, INPUT_FILENAME_PREFIX, PASTE_COLS, PASTE_ROWS)
     print("merge_image.py:",len(merger.img_cells),"files loaded")
     if (merger.rows*merger.cols != len(merger.img_cells)):
-        print("ERROR: WRONG SLICING DIMENSION PROVIDED.")
+        print("WARNING: incorrect slicing dimension.")
 
     if not VERBOSE:
         sys.stdout = open(os.devnull, 'w') # block stdout
