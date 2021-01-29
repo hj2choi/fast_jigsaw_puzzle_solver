@@ -1,6 +1,6 @@
 # Jigsaw Puzzle Solver
-slices image and randomly randomly transforms individual slices. then, re-assemble them back to original image<br />
-<i>#Modified Dijkstra SPF algorithm #Linked-Hashmap #Parallel computation</i>
+slices image and randomly transforms individual slices. then, re-assemble them back to original image<br/>
+<sub><i>#Modified Dijkstra SPF algorithm #Linked-Hashmap #Parallel computation</i></sub>
 <br />
 
 #### external dependencies
@@ -11,16 +11,14 @@ numpy, cv2
 ```sh
 ./run_automated_test_animated.sh
 ```
-https://hjchoi95.github.io/images/external/jigsaw_puzzle_solver.gif</br>
-<img src="https://hjchoi95.github.io/images/external/merge_anim.PNG" width="600" title="merge anim">
-</br></br></br>
+https://hjchoi95.github.io/images/external/jigsaw_puzzle_solver.gif</br></br>
 
 #### slice_image.py: slice and randomly transform image
 ```sh
 slice_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [OPTION]
 ```
 [OPTION] -v: *enable console log*</br>
-<img src="https://hjchoi95.github.io/images/external/cut_image.png" width="450" title="merge anim">
+<img src="https://hjchoi95.github.io/images/external/cut_image.png" width="300" title="slice image">
 </br>
 
 #### merge_image.py: re-assemble image fragments back to original image
@@ -28,7 +26,7 @@ slice_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix
 merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [OPTION]
 ```
 [OPTION] -v: *enable console log and show merge animation*<br/>
-<img src="https://hjchoi95.github.io/images/external/merge_image.png" width="450" title="merge anim">
+<img src="https://hjchoi95.github.io/images/external/merge_image.png" width="300" title="merge image">
 
 ## config.ini
 | Key | Description |
@@ -55,7 +53,7 @@ in all cases, <b>N<sup>2</sup> >= C >= 0</b></br>
 | <i>(PriorityQueue)</i> enqueue image (sorted)  | - | - | - | O(logN) | O(N) |
 | <b>Total time complexity</b> | <i>O(256N<sup>2</sup>)</i></br>+<b>O(4096N<sup>4</sup>)</b> | <b><i>O(32N<sup>2</sup>)</i></b></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(512N<sup>4</sup>)</b> |  <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(128N<sup>3</sup>)</b> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(3CNlogN)</b></br> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(N(C+N))</b> |
 
-## modified Dijkstra SPF image assembly algorithm
+## Modified Dijkstra SPF image assembly algorithm
 ```
 I[i,t]: all image fragments (image, transformation)
 S[i,j,t]: all-pairs image similarity-matrix
