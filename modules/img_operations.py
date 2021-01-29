@@ -39,50 +39,7 @@ def img_borders_similarity(img1, img2, dir):
         return 1/(1+np.mean(np.linalg.norm(np.subtract(img2[-1], img1[0]), axis = 1)))
     elif dir == DIR['r']:
         return 1/(1+np.mean(np.linalg.norm(np.subtract(img1[:,-1], img2[:,0]), axis = 1)))
-    else:
+    elif dir == DIR['l']:
         return 1/(1+np.mean(np.linalg.norm(np.subtract(img2[:,-1], img1[:,0]), axis = 1)))
-
-"""
-flips image across y axis
-@Parameters
-img (npArray):      raw image (h, w, RGB)
-"""
-def mirror(img):
-    print("mirror", end = " ")
-    img_out = np.copy(img)
-    for i in range(len(img_out)):
-        for j in range(len(img_out[0])//2):
-            temp = np.copy(img_out[i][j])
-            img_out[i][j] = img_out[i][-j-1]
-            img_out[i][-j-1] = temp
-    return img_out
-
-"""
-flips image across x axis
-@Parameters
-img (npArray):      raw image (h, w, RGB)
-"""
-def flip(img):
-    print("flip", end = " ")
-    img_out = np.copy(img)
-    for j in range(len(img_out[0])):
-        for i in range(len(img_out)//2):
-            temp = np.copy(img_out[i][j])
-            img_out[i][j] = img_out[-i-1][j]
-            img_out[-i-1][j] = temp
-    return img_out
-
-"""
-rotates image by 90 degrees by taking bottom left corner as the center
-@Parameters
-img (npArray):          raw image (h, w, RGB)
-clockwise (bool):       clockwise or counterclockwise
-"""
-def rotate90(img, clockwise = False):
-    print("rotate", end = " ")
-    img_rot = np.zeros((len(img[0]), len(img), len(img[0][0])),
-                            dtype = np.uint8)
-    for i in range(len(img_rot)):
-        for j in range(len(img_rot[0])):
-            img_rot[i][j] = img[-j-1][i] if clockwise else img[j][-i-1]
-    return img_rot
+    else:
+        return -1

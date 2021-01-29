@@ -1,5 +1,6 @@
 # Jigsaw Puzzle Solver
 slices image and randomly randomly transforms individual slices. then, re-assemble them back to original image<br />
+<i>#Modified Dijkstra SPF algorithm #Linked-Hashmap #Parallel computation</i>
 <br />
 
 #### external dependencies
@@ -10,17 +11,24 @@ numpy, cv2
 ```sh
 ./run_automated_test_animated.sh
 ```
-#### cut_image.py: slice and randomly transform image
+https://hjchoi95.github.io/images/external/jigsaw_puzzle_solver.gif</br>
+<img src="https://hjchoi95.github.io/images/external/merge_anim.PNG" width="600" title="merge anim">
+</br></br></br>
+
+#### slice_image.py: slice and randomly transform image
 ```sh
-cut_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [OPTION]
+slice_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [OPTION]
 ```
 [OPTION] -v: *enable console log*</br>
+<img src="https://hjchoi95.github.io/images/external/cut_image.png" width="450" title="merge anim">
+</br>
+
 #### merge_image.py: re-assemble image fragments back to original image
 ```sh
 merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [OPTION]
 ```
 [OPTION] -v: *enable console log and show merge animation*<br/>
-
+<img src="https://hjchoi95.github.io/images/external/merge_image.png" width="450" title="merge anim">
 
 ## config.ini
 | Key | Description |
@@ -31,29 +39,51 @@ merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 | `enable_merge_visualization` | show merging animation |
 | `animation_interval_millis` | milliseconds interval between each merge step in animation |
 
-## image assembly algorithm
-1. place all images in a queue.<br />
-2. start with a empty 'board' and paste random image at center.<br />
-3. while queue is not empty:<br />
-&nbsp;&nbsp;&nbsp;&nbsp;3-1. for all possible 'board' locations (x,y) :<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3-1-1. find best-fit image and orientation pair I(x,y) = (img, orientation, score) at each position<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*3-1-2. (optimization) save best-fit image to cache*<br />
-&nbsp;&nbsp;&nbsp;&nbsp;3-2. paste best-fit image, img = argmax(I(score)) to the 'board'<br />
-&nbsp;&nbsp;&nbsp;&nbsp;3-3. remove image i from the queue<br />
+## Algorithm Time complexity and Optimizations
+<b>N</b>: number of images</br>
+<b>C</b>: total cache miss (number of duplicate images to be removed from queue)</br>
+in all cases, <b>N<sup>2</sup> >= C >= 0</b></br>
+| Operations \ Algorithms | brute-force | brute-force</br><sub><sup><i>index mapping</i></br><i>cache</i></sub></sup> | brute-force</br><sub><sup><i>memoization</i></br><i>hashmap</i></sub></sup> | SPF</br><sub><sup><i>max-heap</i></sub></sup> | SPF</br><sub><sup><i>linked-hashmap</i></sub></sup> |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| <i>Pre-compute similarity matrix</i> | <i>O(256N<sup>2</sup>) | <i><b>O(32N<sup>2</sup>)</b> | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>)</i> |
+| Traverse through all images | O(N) | O(N) | O(N) | O(N) | O(N) |
+| Traverse through all positions | O(4N) | O(4N) | O(4N) | - | - |
+| Find best-fit image at position p | O(256N) | <b>O(32N)</b> | O(32N) | O(32N) | O(32N) |
+| Validate image block shape and size | O(4N) | O(4N) | <b>O(1)</b> | O(1) | O(1) |
+| <i>(Cache / PriorityQueue)</i> remove all by ID | - | O(4N) | <b>O(C)</b> | O(ClogN) | <b>O(C)</b> |
+| <i>(PriorityQueue)</i> dequeue image | - | - | - | O(logN) | <b>O(1)</b> |
+| <i>(PriorityQueue)</i> enqueue image (sorted)  | - | - | - | O(logN) | O(N) |
+| <b>Total time complexity</b> | <i>O(256N<sup>2</sup>)</i></br>+<b>O(4096N<sup>4</sup>)</b> | <b><i>O(32N<sup>2</sup>)</i></b></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(512N<sup>4</sup>)</b> |  <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(128N<sup>3</sup>)</b> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(3CNlogN)</b></br> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(N(C+N))</b> |
 
-## optimization techniques
-- preprocessed all-pairs image border similarity metric
-- used hashmap for O(1) search time
-- used cache mechanism to minimize redundant computation
-- used parallel processing (multi-processing) when heavy load of computation is required
-- used index mapping table for looking up similarity score for each orientation and stitching directions
+## modified Dijkstra SPF image assembly algorithm
+```
+I[i,t]: all image fragments (image, transformation)
+S[i,j,t]: all-pairs image similarity-matrix
+G[y,x]: image cell-block
+Q: priority queue
+
+1 initialize S with similarity metric
+2 set all nodes in G as inactive
+3 root <- (im: I[0,0], pos: (0,0))
+4 Q.enqueue(root)
+5 while Q is not empty do
+6     v <- Q.dequeue()
+7     G[v.pos].activate(v)
+8     for all w, dir in G.inactiveNeighbors(v) do
+9         w.im <- arg_max(S[v.im,j,k] for all j and k)
+10        w.pos <- (v.pos+dir)
+11        Q.enqueue(w)
+12    Q.removeAllDuplicates(v)
+```
 
 ## TODO
-- try switching some of the data structures to hashmap. cellblock and cellblock_cache require repetitive search. Hashmap can reduce search from O(row*col) to O(1).</br>
-  Also, turn cellblock into class object instead of using dictionary. *validate_cellblock()*, *clean_cellblock_cache()* should ideally run in O(1)
-- too much I/O overhead when creating process. Need to do something about python's Global Interpreter Lock.
-- exploiting diagonality property of distance matrix might open a room for further optimization
+- too much I/O overhead when creating child process. Need to do something about python's Global Interpreter Lock.
+- use diagonality property of similarity matrix for 2x speedup
 
 ### references
-http://chenlab.ece.cornell.edu/people/Andy/publications/Andy_files/Gallagher_cvpr2012_puzzleAssembly.pdf
-http://www.bmva.org/bmvc/2016/papers/paper139/paper139.pdf
+http://chenlab.ece.cornell.edu/people/Andy/publications/Andy_files/Gallagher_cvpr2012_puzzleAssembly.pdf</br>
+http://www.bmva.org/bmvc/2016/papers/paper139/paper139.pdf</br>
+https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm</br>
+https://en.wikipedia.org/wiki/Priority_queue</br>
+https://github.com/python/cpython/blob/master/Lib/heapq.py</br>
+https://www.geeksforgeeks.org/linkedhashmap-class-java-examples/</br>

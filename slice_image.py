@@ -6,15 +6,15 @@ import cv2
 """
 wrapper functions for randomized transformation. initial random seed is set for reproducibility
 """
-def rand_mirror(img):
+def rand_flip_x(img):
     if random.random() > 0.5:
-        print("mirror", end=" ")
+        print("flip_x", end=" ")
         return np.flip(img, 1)
     return img
 
-def rand_flip(img):
+def rand_flip_y(img):
     if random.random() > 0.5:
-        print("flip", end=" ")
+        print("flip_y", end=" ")
         return np.flip(img, 0)
     return img
 
@@ -36,8 +36,8 @@ uid = 0
 def process_image_segment(img, filepath_prefix):
     global uid
     hash = hashlib.md5(str.encode(filepath_prefix + str(uid))).hexdigest()
-    print("image slice:", hash, end=" => ")
-    img = rand_rotate90(rand_flip(rand_mirror(img)))
+    print("image fragment", hash, end=": ")
+    img = rand_rotate90(rand_flip_y(rand_flip_x(img)))
     cv2.imwrite(filepath_prefix + "_" + hash + ".png", img)
     print("")
     uid += 1
@@ -49,19 +49,17 @@ def resolve_ambiguous_filename(input_filepath):
     if not os.path.exists(input_filepath):
         pwd = input_filepath.split("/")
         filename = pwd[-1]
-        pathstring = "/".join(pwd[:-1]) if len(pwd)>1 else "."
+        pathstring = "/".join(pwd[:-1]) if len(pwd) > 1 else "."
         for path, dir, files in os.walk("./"):
             for file in files:
                 if file.startswith(filename) and len(file.split(".")[0]) == len(filename):
-                    #print("did you mean",path+"/"+file,"?")
-                    return pathstring+"/"+file
+                    #print("did you mean", path + "/" + file,"?")
+                    return pathstring + "/" + file
     return input_filepath
 
 """
-main function takes 3 steps:
-1. read image and trim image size for uniform sliciing.
-2. divide image into sliced fragments as specified in the input
-3. for each image fragments apply random set of transformations and save them with random filename
+2. read and slice image into fragments as specified in args
+3. for each image slices: apply random set of transformations and save them to random filename
 """
 def main(args, config):
     s_time = time.time()
@@ -73,27 +71,26 @@ def main(args, config):
     CUT_ROWS = int(args[2])
     OUTPUT_PREFIX = args[3]
 
-    # read image and trim
+    # read image
     img = cv2.imread(resolve_ambiguous_filename(SOURCE_FILENAME))
     if img is None:
         print("ERRROR: cannot resolve filename")
         return
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
-    img = img[:len(img) - len(img) % CUT_ROWS, :len(img[0]) - len(img[0]) % CUT_COLS]
-    print("cut_image.py: image loaded and trimmed (h =",img.shape[0],", w =",img.shape[1],")")
-    if not VERBOSE and CUT_ROWS*CUT_COLS > 8:
+    print("slice_image.py: loaded image from", SOURCE_FILENAME)
+    if not VERBOSE or CUT_ROWS * CUT_COLS > 12:
         sys.stdout = open(os.devnull, 'w') # block stdout
 
-    # sllice image into uniform shapes and process each segment
+    # slice image into uniform shapes and process each fragments
     h, w = len(img) // CUT_ROWS, len(img[0]) // CUT_COLS # height and width
     for i in range(CUT_ROWS):
         for j in range(CUT_COLS):
             rs, cs = int(i * h), int(j * w) # row start, col start
             process_image_segment(img[rs: rs + h, cs: cs + w], OUTPUT_DIR + "/" + OUTPUT_PREFIX)
     sys.stdout = sys.__stdout__ # resotre stdout
-    print("fragmented image into",CUT_ROWS*CUT_COLS,"slices. ")
-    print(time.time()-s_time,"seconds elapsed")
+    print("fragmented image into", CUT_ROWS * CUT_COLS,"slices. ")
+    print(time.time() - s_time, "seconds elapsed")
 
 
 if __name__ == '__main__':
