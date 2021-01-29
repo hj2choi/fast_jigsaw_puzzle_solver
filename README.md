@@ -43,14 +43,14 @@ merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 in all cases, <b>N<sup>2</sup> >= C >= 0</b></br>
 | Operations \ Algorithms | brute-force | brute-force</br><sub><sup><i>index mapping</i></br><i>cache</i></sub></sup> | brute-force</br><sub><sup><i>memoization</i></br><i>hashmap</i></sub></sup> | SPF</br><sub><sup><i>max-heap</i></sub></sup> | SPF</br><sub><sup><i>linked-hashmap</i></sub></sup> |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| <i>Pre-compute similarity matrix</i> | <i>O(256N<sup>2</sup>) | <i><b>O(32N<sup>2</sup>)</b> | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>)</i> |
-| Traverse through all images | O(N) | O(N) | O(N) | O(N) | O(N) |
-| Traverse through all positions | O(4N) | O(4N) | O(4N) | - | - |
-| Find best-fit image at position p | O(256N) | <b>O(32N)</b> | O(32N) | O(32N) | O(32N) |
-| Validate image block shape and size | O(4N) | O(4N) | <b>O(1)</b> | O(1) | O(1) |
-| <i>(Cache / PriorityQueue)</i> remove all by ID | - | O(4N) | <b>O(C)</b> | O(ClogN) | <b>O(C)</b> |
-| <i>(PriorityQueue)</i> dequeue image | - | - | - | O(logN) | <b>O(1)</b> |
-| <i>(PriorityQueue)</i> enqueue image (sorted)  | - | - | - | O(logN) | O(N) |
+| <i>similarity matrix</i> | <i>O(256N<sup>2</sup>) | <i><b>O(32N<sup>2</sup>)</b> | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>)</i> |
+| traverse all images | O(N) | O(N) | O(N) | O(N) | O(N) |
+| traverse all positions | O(4N) | O(4N) | O(4N) | - | - |
+| argmax(img at pos(x,y)) | O(256N) | <b>O(32N)</b> | O(32N) | O(32N) | O(32N) |
+| validate cellblock shape | O(4N) | O(4N) | <b>O(1)</b> | O(1) | O(1) |
+| <i>(Queue)</i> rm by ID | - | O(4N) | <b>O(C)</b> | O(ClogN) | <b>O(C)</b> |
+| <i>(Queue)</i> dequeue | - | - | - | O(logN) | <b>O(1)</b> |
+| <i>(Queue)</i> enqueue  | - | - | - | O(logN) | O(N) |
 | <b>Total time complexity</b> | <i>O(256N<sup>2</sup>)</i></br>+<b>O(4096N<sup>4</sup>)</b> | <b><i>O(32N<sup>2</sup>)</i></b></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(512N<sup>4</sup>)</b> |  <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(128N<sup>3</sup>)</b> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(3CNlogN)</b></br> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(N(C+N))</b> |
 
 ## Modified Dijkstra SPF image assembly algorithm
