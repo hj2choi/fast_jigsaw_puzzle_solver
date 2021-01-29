@@ -44,7 +44,7 @@ class ImageMerger:
 
     """
     merge fragmented image cells back to original image.
-    Modified Dijkstra's SPF algorithm. implemented Priority Queue with Linked Hashmap
+    Modified Prim's MST algorithm. implemented Priority Queue with Linked Hashmap
     """
     def merge(self):
         def _best_fit_cell_at(i, j):
@@ -79,7 +79,7 @@ class ImageMerger:
         self.merge_history = [] # reset merge_history
         unused_ids = [*range(0, len(self.raw_imgs))] # remaining cells
         cellblock = mr.CellBlock(self.rows, self.cols) # blueprint for image reconstruction
-        p_queue = mr.LHashmapPriorityQueue(len(self.raw_imgs)) # priority queue for SPF algorithm
+        p_queue = mr.LHashmapPriorityQueue(len(self.raw_imgs)) # priority queue for MST algorithm
         p_queue.enqueue(0, mr.CellData(0, 0, 1.0, cellblock.hs, cellblock.ws)) # source node
 
         # The main loop
@@ -89,7 +89,7 @@ class ImageMerger:
                 _enqueue_all_frontiers(cellblock.inactive_neighbors(*cell.pos()) + duplicates)
             else:
                 p_queue.dequeue() # throw away any invalid cells
-        print("SPF merge algorithm:", time.time() - s_time, "seconds")
+        print("MST merge algorithm:", time.time() - s_time, "seconds")
 
     """
     save merged image to file
