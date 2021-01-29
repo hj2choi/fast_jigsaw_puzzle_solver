@@ -236,7 +236,7 @@ def _flip_y(i):
     return [6,7,4,5,2,3,0,1,10,11,8,9,14,15,12,13][i]
 
 def map8(tgt_transform, src_transform):
-    return _MAPPING_TABLE8[tgt_transform * 32 + src_transform]
+    return _MAPPING_TABLE8[(tgt_transform << 5) + src_transform]
 
 def map4(tgt_transform, src_transform):
     return {

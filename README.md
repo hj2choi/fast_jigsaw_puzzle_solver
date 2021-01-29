@@ -53,7 +53,7 @@ in all cases, <b>N<sup>2</sup> >= C >= 0</b></br>
 | <i>(Queue)</i> enqueue  | - | - | - | O(logN) | O(N) |
 | <b>Total time complexity</b> | <i>O(256N<sup>2</sup>)</i></br>+<b>O(4096N<sup>4</sup>)</b> | <b><i>O(32N<sup>2</sup>)</i></b></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(512N<sup>4</sup>)</b> |  <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(128N<sup>3</sup>)</b> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(3CNlogN)</b></br> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(N(C+N))</b> |
 
-## MST image assembly (Modified Prim's algorithm)
+## MST image assembly algorithm (Modified Prim's algorithm)
 ```
 I[i,t]: all image fragments (image, transformation)
 S[i,j,t]: all-pairs image similarity-matrix
