@@ -1,4 +1,4 @@
-# Jigsaw Puzzle Solver
+# Fast Jigsaw Puzzle Solver with Unknown Orientation
 slices image and randomly transforms individual slices. then, re-assemble them back to original image<br/>
 <sub><i>#Modified Prim's MST algorithm #Linked-Hashmap #Parallel computation</i></sub>
 <br />
@@ -76,7 +76,7 @@ Q: priority queue
 
 ## TODO
 - too much I/O overhead when creating child process. Need to do something about python's Global Interpreter Lock.
-- use diagonality property of similarity matrix for 2x speedup
+- use symmetric property of distance matrix to remove redundant computation.
 
 ### references
 http://chenlab.ece.cornell.edu/people/Andy/publications/Andy_files/Gallagher_cvpr2012_puzzleAssembly.pdf</br>
