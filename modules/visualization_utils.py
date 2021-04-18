@@ -1,4 +1,3 @@
-import copy
 import cv2
 import numpy as np
 from . import img_operations as im_op

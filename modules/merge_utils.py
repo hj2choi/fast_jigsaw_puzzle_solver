@@ -12,6 +12,9 @@ DIR = {
 MAX_PROCESS_COUNT = 3
 SWITCH_TO_PARALLEL_THRESHOLD = 128 # number of images
 
+# stop search if the score is above threshold. set to 1 disable optimization.
+OPTIMIZE_STOP_SEARCH_THRESHOLD = 1
+
 """
 Representation of image cell. id, orientation state, position
 """
@@ -244,6 +247,13 @@ def map4(tgt_transform, src_transform):
     }[tgt_transform]
 
 
+def mat_sym_dmap16(t):
+    return [4, 5, 2, 3, 0, 1, 6, 7, 12, 9, 14, 11, 8, 13, 10, 15][t]
+
+def mat_sym_dmap32(t):
+    return [8, 19, 2, 25, 4, 21, 14, 31, 0, 27, 10, 17, 12, 29, 6, 23,
+    24, 11, 18, 1, 28, 5, 22, 15, 16, 3, 26, 9, 20, 13, 30, 7][t]
+
 """
 Test routines
 """
@@ -290,6 +300,27 @@ def _generate_mapping_table8(sim_matrix):
         for j in range(32):
             print(i,j,"=>",sim_matrix[0][2][i],sim_matrix[0][2][j], end="")
             if (np.abs(sim_matrix[0][2][i] - sim_matrix[0][2][j]) < 0.0000001):
+                if not flag:
+                    print(" match", end="")
+                    flag = 1
+                    mapping_table.append(j)
+                else:
+                    print("\n SOMETHING's WRONG")
+                    return
+            print()
+        print()
+
+    print(mapping_table)
+
+def _generate_mapping_table4(sim_matrix):
+    print(sim_matrix[0][1])
+    print(sim_matrix[1][0])
+    mapping_table = []
+    for i in range(32):
+        flag = 0
+        for j in range(32):
+            print(i,j,"=>",sim_matrix[0][1][i],sim_matrix[1][0][j], end="")
+            if (np.abs(sim_matrix[0][1][i] - sim_matrix[1][0][j]) < 0.0000001):
                 if not flag:
                     print(" match", end="")
                     flag = 1

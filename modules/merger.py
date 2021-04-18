@@ -15,10 +15,11 @@ class ImageMerger:
     """
     def __init__(self, data = [], cols = 0, rows = 0):
         self.rows, self.cols = rows, cols # as specified in args
-        self.raw_imgs = data # image slices with all combination of transformations
+        self.raw_imgs = data # image fragments with all combination of transformations
         self.transformations_count = len(self.raw_imgs[0]) # number of possible transformation states
         self.sim_matrix = np.zeros((len(self.raw_imgs), len(self.raw_imgs), self.transformations_count * 4))
         self.idxmap = mr.map4 if self.transformations_count == 4 else mr.map8  # similarity matrix index mapper
+        self.mat_sym_dmap = mr.mat_sym_dmap16 if self.transformations_count == 4 else mr.mat_sym_dmap32  # matrix symmetry depth mapper
         self.merge_history = [] # merge history from first merge to last
 
     """
@@ -56,6 +57,8 @@ class ImageMerger:
                         score = self.sim_matrix[adj.id][id][self.idxmap(adj.transform, k)]
                         if (best_celldata.score < score or not best_celldata.is_valid()):
                             best_celldata.set(id, k % t_cnt, score, i, j, adj.dir)
+                            if mr.OPTIMIZE_STOP_SEARCH_THRESHOLD < score:
+                                return best_celldata
             return best_celldata
 
         def _dequeue_and_merge():
@@ -124,16 +127,23 @@ class ImageMerger:
         t_cnt = self.transformations_count
         raw_imgs_norm = np.array(self.raw_imgs) / 256 #normalize
 
-        if (self._construct_similaritymatrix_parallel(raw_imgs_norm, t_cnt)):
-            return
-
         s_time = time.time()
+        # try parallel preprocessing for large number of images
+        if not self._construct_similaritymatrix_parallel(raw_imgs_norm, t_cnt):
+            # serial processing. Only compute for the upper triangular.
+            for i in range(len(self.raw_imgs)):
+                for j in range(len(self.raw_imgs)):
+                    if (i < j):
+                        for k in range(t_cnt * 4):
+                            self.sim_matrix[i][j][k] = im_op.img_borders_similarity(
+                                                        raw_imgs_norm[j][k % t_cnt],
+                                                        raw_imgs_norm[i][0], k // t_cnt)
+        # fill up the missing lower triangular of the similarity matrix.
         for i in range(len(self.raw_imgs)):
             for j in range(len(self.raw_imgs)):
-                if (i == j):
-                    continue
-                for k in range(t_cnt * 4):
-                    self.sim_matrix[i][j][k] = im_op.img_borders_similarity(raw_imgs_norm[j][k % t_cnt], raw_imgs_norm[i][0], k // t_cnt)
+                if (i > j):
+                    for k in range(t_cnt * 4):
+                        self.sim_matrix[i][j][k] = self.sim_matrix[j][i][self.mat_sym_dmap(k)]
         print("preprocessing:", time.time() - s_time, "seconds")
 
     def _construct_similaritymatrix_parallel(self, raw_imgs_norm, t_cnt):
@@ -146,8 +156,7 @@ class ImageMerger:
                 s_time = time.time()
                 self.sim_matrix = np.reshape(pool.map(self._compute_elementwise_similarity,
                                                     np.ndenumerate(np.copy(self.sim_matrix))),
-                                                    (len(self.raw_imgs), len(self.raw_imgs), len(self.sim_matrix[0][0])))
-            print("parallellized preprocessing:", time.time() - s_time, "seconds")
+                                                    (len(self.raw_imgs), len(self.raw_imgs), t_cnt * 4))
             return True
         except Exception as e:
             print("Failed to start process")
@@ -162,7 +171,8 @@ class ImageMerger:
 
     def _compute_elementwise_similarity(self, x):
         i, j, k = x[0][0], x[0][1], x[0][2]
-        if (i == j):
+        # only compute for the upper triangular.
+        if (i > j):
             return 0
         return im_op.img_borders_similarity(raw_imgs_norm_g[j][k % t_cnt],
                                 raw_imgs_norm_g[i][0], k // t_cnt)

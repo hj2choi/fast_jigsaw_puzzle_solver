@@ -1,5 +1,5 @@
 # Jigsaw Puzzle Solver
-slices image and randomly transforms individual slices. then, re-assemble them back to original image<br/>
+fragments image into random transformations. then, re-assembles them back to original image<br/>
 <sub><i>#Modified Prim's MST algorithm #Linked-Hashmap #Parallel computation</i></sub>
 <br />
 
@@ -9,16 +9,16 @@ numpy, cv2
 ## Execution guide
 ### Quickstart: quick demo with animation
 ```sh
-./run_automated_test_animated.sh
+./quickstart.sh
 ```
-https://hjchoi95.github.io/images/external/jigsaw_puzzle_solver.gif</br></br>
+[![demo_anim](https://hjchoi95.github.io/images/external/jigsaw_puzzle_solver.gif)]</br></br>
 
-#### slice_image.py: slice and randomly transform image
+#### fragment_image.py: fragment and randomly transform image
 ```sh
-slice_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [OPTION]
+fragment_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [OPTION]
 ```
 [OPTION] -v: *enable console log*</br>
-<img src="https://hjchoi95.github.io/images/external/cut_image.png" width="300" title="slice image">
+<img src="https://hjchoi95.github.io/images/external/cut_image.png" width="300" title="fragment image">
 </br>
 
 #### merge_image.py: re-assemble image fragments back to original image
@@ -31,7 +31,7 @@ merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 ## config.ini
 | Key | Description |
 | :---: | --- |
-| `images_dir` | directory to save fragmented (sliced and randomly transformed) images |
+| `images_dir` | directory to save fragmented images |
 | `output_dir` | directory to save final merged image |
 | `debug` | enable console logging |
 | `enable_merge_visualization` | show animation after merge is complete |
@@ -71,12 +71,11 @@ Q: priority queue
 9         w.im <- arg_max(S[v.im,j,k] for all j and k)
 10        w.pos <- (v.pos+dir)
 11        Q.enqueue(w)
-12    Q.removeAllDuplicates(v)
+12    Q.removeAllDuplicates(v.im)
 ```
 
 ## TODO
-- too much I/O overhead when creating child process. Need to do something about python's Global Interpreter Lock.
-- use diagonality property of similarity matrix for 2x speedup
+- migrate from opencv to pillow
 
 ### references
 http://chenlab.ece.cornell.edu/people/Andy/publications/Andy_files/Gallagher_cvpr2012_puzzleAssembly.pdf</br>
@@ -86,3 +85,4 @@ https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm</br>
 https://en.wikipedia.org/wiki/Priority_queue</br>
 https://github.com/python/cpython/blob/master/Lib/heapq.py</br>
 https://www.geeksforgeeks.org/linkedhashmap-class-java-examples/</br>
+https://en.wikipedia.org/wiki/Symmetric_matrix</br>

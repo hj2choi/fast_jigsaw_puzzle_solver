@@ -58,8 +58,8 @@ def resolve_ambiguous_filename(input_filepath):
     return input_filepath
 
 """
-2. read and slice image into fragments as specified in args
-3. for each image slices: apply random set of transformations and save them to random filename
+2. read and slice image into y*x pieces as specified in args
+3. for each image slice: apply random set of transformations and save them to random filename
 """
 def main(args, config):
     s_time = time.time()
@@ -78,11 +78,11 @@ def main(args, config):
         return
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
-    print("slice_image.py: loaded image from", SOURCE_FILENAME)
+    print("fragment_image.py: loaded image from", SOURCE_FILENAME)
     if not VERBOSE or CUT_ROWS * CUT_COLS > 12:
         sys.stdout = open(os.devnull, 'w') # block stdout
 
-    # slice image into uniform shapes and process each fragments
+    # slice image into uniform shapes and process each slices
     h, w = len(img) // CUT_ROWS, len(img[0]) // CUT_COLS # height and width
     for i in range(CUT_ROWS):
         for j in range(CUT_COLS):
