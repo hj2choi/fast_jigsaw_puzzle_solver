@@ -1,4 +1,4 @@
-# Jigsaw Puzzle Solver
+# Fast Jigsaw Puzzle Solver with unknown orientation
 fragments image into random transformations. then, re-assembles them back to original image<br/>
 <sub><i>#Modified Prim's MST algorithm #Linked-Hashmap #Parallel computation</i></sub>
 <br />
