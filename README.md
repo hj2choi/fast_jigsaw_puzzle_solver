@@ -11,14 +11,14 @@ numpy, cv2
 ```sh
 ./quickstart.sh
 ```
-[![demo_anim](https://hjchoi95.github.io/images/external/jigsaw_puzzle_solver.gif)]</br></br>
+[![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver.gif)]</br></br>
 
 #### fragment_image.py: fragment and randomly transform image
 ```sh
 fragment_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [OPTION]
 ```
 [OPTION] -v: *enable console log*</br>
-<img src="https://hjchoi95.github.io/images/external/cut_image.png" width="300" title="fragment image">
+<img src="https://hj2choi.github.io/images/external/cut_image.png" width="300" title="fragment image">
 </br>
 
 #### merge_image.py: re-assemble image fragments back to original image
@@ -26,7 +26,7 @@ fragment_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_pre
 merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [OPTION]
 ```
 [OPTION] -v: *enable console log and show merge animation*<br/>
-<img src="https://hjchoi95.github.io/images/external/merge_image.png" width="300" title="merge image">
+<img src="https://hj2choi.github.io/images/external/merge_image.png" width="300" title="merge image">
 
 ## config.ini
 | Key | Description |
