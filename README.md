@@ -1,9 +1,10 @@
 # Fast Jigsaw Puzzle Solver with unknown orientation
-fragments image into random transformations. then, re-assembles them back to original image<br/>
-<sub><i>#Modified Prim's MST algorithm #Linked-Hashmap #Parallel computation</i></sub>
+Fragments image into random orientations.</br>
+Re-assembles image fragments back to original image.</br>
+<sub><i>#Prim's MST algorithm #Linked-Hashmap #Parallel computation</i></sub>
 <br />
 
-#### external dependencies
+#### dependencies
 numpy, cv2
 
 ## Execution guide
@@ -11,26 +12,26 @@ numpy, cv2
 ```sh
 ./quickstart.sh
 ```
-[![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver.gif)]</br></br>
+![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver.gif)</br></br>
 
-#### fragment_image.py: fragment and randomly transform image
+#### fragment_image.py: slice and randomly transform image
 ```sh
-fragment_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [OPTION]
+fragment_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [-v]
 ```
-[OPTION] -v: *enable console log*</br>
+-v: *enable console log*</br>
 <img src="https://hj2choi.github.io/images/external/cut_image.png" width="300" title="fragment image">
 </br>
 
 #### merge_image.py: re-assemble image fragments back to original image
 ```sh
-merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [OPTION]
+merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [-v]
 ```
-[OPTION] -v: *enable console log and show merge animation*<br/>
+-v: *enable console log and show animation*<br/>
 <img src="https://hj2choi.github.io/images/external/merge_image.png" width="300" title="merge image">
 
 ## config.ini
 | Key | Description |
-| :---: | --- |
+| :--- | --- |
 | `images_dir` | directory to save fragmented images |
 | `output_dir` | directory to save final merged image |
 | `debug` | enable console logging |
@@ -41,16 +42,16 @@ merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 <b>N</b>: number of images</br>
 <b>C</b>: total cache miss (number of duplicate images to be removed from queue)</br>
 in all cases, <b>N<sup>2</sup> >= C >= 0</b></br>
-| Operations \ Algorithms | brute-force | brute-force</br><sub><sup><i>index mapping</i></br><i>cache</i></sub></sup> | brute-force</br><sub><sup><i>memoization</i></br><i>hashmap</i></sub></sup> | MST</br><sub><sup><i>max-heap</i></sub></sup> | MST</br><sub><sup><i>linked-hashmap</i></sub></sup> |
+| Operations \ Algorithms | brute-force | brute-force</br><sub><sup><i>index mapping</i></br><i>cache</i></sub></sup> | brute-force</br><sub><sup><i>memoization</i></br><i>hashmap</i></sub></sup> | MST</br><sub><sup><i>max-heap</i></sub></sup> | MST</br><sub><sup><i>linked-hashmap</i></sub></sup></br><sub><sup><i>matrix symmetry</i></sub></sup> |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| <i>similarity matrix</i> | <i>O(256N<sup>2</sup>) | <i><b>O(32N<sup>2</sup>)</b> | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>)</i> |
+| <i>similarity matrix</i> | <i>O(256N<sup>2</sup>) | <i><b>O(32N<sup>2</sup>)</b> | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i><b>O(16N<sup>2</sup>)</b></i> |
 | traverse all images | O(N) | O(N) | O(N) | O(N) | O(N) |
 | traverse all positions | O(4N) | O(4N) | O(4N) | - | - |
 | argmax(img at pos(x,y)) | O(256N) | <b>O(32N)</b> | O(32N) | O(32N) | O(32N) |
 | validate cellblock shape | O(4N) | O(4N) | <b>O(1)</b> | O(1) | O(1) |
-| <i>(Queue)</i> remove by ID | - | O(4N) | <b>O(C)</b> | O(ClogN) | <b>O(C)</b> |
-| <i>(Queue)</i> extract_min() | - | - | - | O(logN) | <b>O(1)</b> |
-| <i>(Queue)</i> enqueue  | - | - | - | O(logN) | O(N) |
+| <i>(PQueue)</i> remove by ID | - | O(4N) | <b>O(C)</b> | O(ClogN) | <b>O(C)</b> |
+| <i>(PQueue)</i> extract_min() | - | - | - | O(logN) | <b>O(1)</b> |
+| <i>(PQueue)</i> enqueue  | - | - | - | O(logN) | O(N) |
 | <b>Total time complexity</b> | <i>O(256N<sup>2</sup>)</i></br>+<b>O(4096N<sup>4</sup>)</b> | <b><i>O(32N<sup>2</sup>)</i></b></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(512N<sup>4</sup>)</b> |  <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(128N<sup>3</sup>)</b> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(3CNlogN)</b></br> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(N(C+N))</b> |
 
 ## MST image assembly algorithm (Modified Prim's algorithm)
