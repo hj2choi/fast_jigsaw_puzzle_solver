@@ -13,9 +13,10 @@ class ImageMerger:
     @usage
     mr = mr.ImageMerger.loadfromfilepath(args, ...)
     """
-    def __init__(self, data = [], cols = 0, rows = 0):
+    def __init__(self, data = ([], []), cols = 0, rows = 0):
         self.rows, self.cols = rows, cols # as specified in args
-        self.raw_imgs = data # image fragments with all combination of transformations
+        self.raw_imgs_unaligned = data[0] # for visualization
+        self.raw_imgs = data[1] # image fragments with all combination of transformations
         self.transformations_count = len(self.raw_imgs[0]) # number of possible transformation states
         self.sim_matrix = np.zeros((len(self.raw_imgs), len(self.raw_imgs), self.transformations_count * 4))
         self.idxmap = mr.map4 if self.transformations_count == 4 else mr.map8  # similarity matrix index mapper
@@ -28,6 +29,7 @@ class ImageMerger:
     @classmethod
     def loadfromfilepath(cls, dir, prefix, cols, rows):
         raw_imgs = []
+        raw_imgs_unaligned = []
         for (dirpath, dirnames, filenames) in os.walk(dir):
             for filename in filenames:
                 if filename.startswith(prefix):
@@ -38,10 +40,12 @@ class ImageMerger:
                             if i == 4: img = np.flip(img, 0)
                             all_transformations.append(np.copy(np.rot90(img, i)))
                         raw_imgs.append(all_transformations)
+                        raw_imgs_unaligned.append(all_transformations)
                     else: # rectangle images
+                        raw_imgs_unaligned.append([img, np.flip(img, 1), np.flip(img, 0), np.flip(np.flip(img, 0), 1)])
                         img = np.rot90(img) if len(img) > len(img[0]) else img
                         raw_imgs.append([img, np.flip(img, 1), np.flip(img, 0), np.flip(np.flip(img, 0), 1)])
-        return cls(raw_imgs, cols, rows)
+        return cls((raw_imgs_unaligned, raw_imgs), cols, rows)
 
     """
     merge fragmented image cells back to original image.
@@ -115,7 +119,8 @@ class ImageMerger:
         cv2.imwrite(filepath + ".png", whiteboard)
 
     def start_merge_animation(self, interval):
-        vis.start_merge_animation(self.merge_history, self.raw_imgs, self.rows, self.cols, interval)
+        vis.start_merge_animation(self.merge_history, self.raw_imgs_unaligned,
+                                    self.raw_imgs, self.rows, self.cols, interval)
 
     """===========Private Methods============"""
     """

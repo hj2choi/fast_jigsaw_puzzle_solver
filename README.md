@@ -24,7 +24,7 @@ opencv-python 4.5.1.48
 ### Quickstart: quick demo with animation
 ```bash
 pip install -r requirements.txt
-./quickstart.sh
+bash quickstart.sh
 ```
 
 #### fragment_image.py: slice and randomly transform image
@@ -54,7 +54,7 @@ merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 ## Optimization techniques and Time complexities
 <b>N</b>: number of images</br>
 <b>C</b>: total cache miss (number of duplicate images to be removed from queue)</br>
-in all cases, <b>N<sup>2</sup> >= C >= 0</b></br>
+in all cases, <b>C = O(N)</b></br>
 | Operations \ Algorithms | brute-force<br><br><br> | brute-force</br><sub><sup><i>index mapping</i></br><i>hashmap</i></sub></sup> | Prim's MST</br><sub><sup><i>max-heap</i></sub></sup><br><br> | Prim's MST</br><sub><sup><i>linked-hashmap</i></sub></sup></br><sub><sup><i>matrix symmetry</i></sub></sup> |
 | :--- | :---: | :---: | :---: | :---: |
 | <i>similarity matrix</i> | <i>O(256N<sup>2</sup>) | <i><b>O(32N<sup>2</sup>)</b> | <i>O(32N<sup>2</sup>) | <i><b>O(16N<sup>2</sup>)</b></i> |

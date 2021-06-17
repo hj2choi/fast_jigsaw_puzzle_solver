@@ -9,45 +9,53 @@ MAX_MERGE_ANIMATION_WINDOW_SIZE = (480, 800) # height, width
 """
 animation routine.
 """
-def start_merge_animation(merge_history, img_cells, rows, cols, interval_millis = 200):
+def start_merge_animation(merge_history, img_cells_unaligned, img_cells, rows, cols, interval_millis = 200):
     if (len(merge_history) < 1):
         return
 
     height, width = merge_history[-1]["cellblock"].size()
     for i in range(len(merge_history)):
-        _display_from_cellblock(merge_history[i], img_cells, height, width,
+        _display_from_cellblock(merge_history[i], img_cells_unaligned, img_cells, height, width,
                             str(i+1)+"/"+str(len(merge_history)), True, interval_millis)
-    _display_from_cellblock(merge_history[-1], img_cells, height, width,
+    _display_from_cellblock(merge_history[-1], img_cells_unaligned, img_cells, height, width,
                         str(len(merge_history))+"/"+str(len(merge_history)), False, interval_millis*4)
 
 """
 show remaining image fragments
 """
 MERGED_ID_LIST = []
-def _display_remaining_pieces(img_cells, height, width, merge_id, interval_millis = 200):
+def _display_remaining_pieces(img_cells_unaligned, height, width, merge_id, interval_millis = 200):
     global MERGED_ID_LIST
     MERGED_ID_LIST.append(merge_id)
 
     max_h = MAX_PIECES_WINDOW_SIZE[0]
     max_w = MAX_PIECES_WINDOW_SIZE[1]
-    cell_h = len(img_cells[0][0])
-    cell_w = len(img_cells[0][0][0])
-    window_h = int((height * cell_h)*1.15)
-    window_w = int((width * cell_w)*1.15)
+    max_cell_len = max(len(img_cells_unaligned[0][0]), len(img_cells_unaligned[0][0][0]))
+    mid_align_offset = (max_cell_len - min(len(img_cells_unaligned[0][0]), len(img_cells_unaligned[0][0][0]))) // 2
+    window_h = int((height * max_cell_len)*1.15)
+    window_w = int((width * max_cell_len)*1.15)
     start_h = 20
     start_w = 20
     scale = min(max_h/window_h, max_w/window_w)
 
     whiteboard = np.zeros((window_h, window_w, 3), dtype = np.uint8)
     whiteboard.fill(255)
-    for i in range(len(img_cells)):
+    for i in range(len(img_cells_unaligned)):
+        placeholder = np.full((max_cell_len, max_cell_len, 3), 240)
+        paste = img_cells_unaligned[i][0]
+        cell_h = len(paste)
+        cell_w = len(paste[0])
+        y_offset = start_h + (i//width)*int(max_cell_len*1.1)
+        x_offset = start_w + (i%width)*int(max_cell_len*1.1)
+        whiteboard[y_offset:y_offset+max_cell_len, x_offset:x_offset+max_cell_len] = placeholder
         for j in MERGED_ID_LIST:
             if j == i:
                 break
         else:
-            paste = img_cells[i][0]
-            y_offset = start_h+(i//width)*int(cell_h*1.1)
-            x_offset = start_w+(i%width)*int(cell_w*1.1)
+            if cell_h < cell_w:
+                y_offset += mid_align_offset
+            else:
+                x_offset += mid_align_offset
             whiteboard[y_offset:y_offset+cell_h, x_offset:x_offset+cell_w] = paste
     whiteboard = cv2.resize(whiteboard, (int(window_w*scale), int(window_h*scale)))
     cv2.imshow("remaining fragments", whiteboard)
@@ -55,7 +63,7 @@ def _display_remaining_pieces(img_cells, height, width, merge_id, interval_milli
 """
 construct image from cellblock and visualize
 """
-def _display_from_cellblock(merge, img_cells, height, width, text="", draw_borders = True, interval_millis = 200):
+def _display_from_cellblock(merge, img_cells_unaligned, img_cells, height, width, text="", draw_borders = True, interval_millis = 200):
     global MERGED_ID_LIST
     cellblock = merge["cellblock"].data
     celldata = merge["celldata"]
@@ -105,7 +113,7 @@ def _display_from_cellblock(merge, img_cells, height, width, text="", draw_borde
                             text+" similarity score ="+str(celldata.score), (30, len(whiteboard)-50),
                             fontFace = cv2.LINE_AA, fontScale = 0.5, color = (255,255,255))
     try:
-        _display_remaining_pieces(img_cells, height, width, celldata.id)
+        _display_remaining_pieces(img_cells_unaligned, height, width, celldata.id)
     except:
         pass
     cv2.imshow("merge process", whiteboard)
