@@ -192,6 +192,7 @@ class LHashmapPriorityQueue:
         self.hashmap[returnnode.key].remove(returnnode)
         return returnnode.val
 
+    # remove duplicate image ids still in the hashmap.
     def dequeue_and_remove_duplicate_ids(self):
         if not self.ll_head:
             return None

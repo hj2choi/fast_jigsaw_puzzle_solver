@@ -3,15 +3,15 @@ from multiprocessing import Pool
 import numpy as np
 import cv2
 from . import img_operations as im_op
-from . import merge_utils as mr
+from . import assembler_data_structures as ds
 from . import visualization_utils as vis
 
-class ImageMerger:
+class ImageAssembler:
     """
-    ImageMerger constructor. To be used with loadfromfilepath()
+    ImageAssembler constructor. To be used with loadfromfilepath()
 
     @usage
-    mr = mr.ImageMerger.loadfromfilepath(args, ...)
+    assembler = asm.ImageAssembler.loadfromfilepath(args, ...)
     """
     def __init__(self, data = ([], []), cols = 0, rows = 0):
         self.rows, self.cols = rows, cols # as specified in args
@@ -19,8 +19,8 @@ class ImageMerger:
         self.raw_imgs = data[1] # image fragments with all combination of transformations
         self.transformations_count = len(self.raw_imgs[0]) # number of possible transformation states
         self.sim_matrix = np.zeros((len(self.raw_imgs), len(self.raw_imgs), self.transformations_count * 4))
-        self.idxmap = mr.map4 if self.transformations_count == 4 else mr.map8  # similarity matrix index mapper
-        self.mat_sym_dmap = mr.mat_sym_dmap16 if self.transformations_count == 4 else mr.mat_sym_dmap32  # matrix symmetry depth mapper
+        self.idxmap = ds.map4 if self.transformations_count == 4 else ds.map8  # similarity matrix index mapper
+        self.mat_sym_dmap = ds.mat_sym_dmap16 if self.transformations_count == 4 else ds.mat_sym_dmap32  # matrix symmetry depth mapper
         self.merge_history = [] # merge history from first merge to last
 
     """
@@ -42,26 +42,27 @@ class ImageMerger:
                         raw_imgs.append(all_transformations)
                         raw_imgs_unaligned.append(all_transformations)
                     else: # rectangle images
-                        raw_imgs_unaligned.append([img, np.flip(img, 1), np.flip(img, 0), np.flip(np.flip(img, 0), 1)])
+                        raw_imgs_unaligned.append([img, np.flip(img, 1),
+                                                    np.flip(img, 0), np.flip(np.flip(img, 0), 1)])
                         img = np.rot90(img) if len(img) > len(img[0]) else img
                         raw_imgs.append([img, np.flip(img, 1), np.flip(img, 0), np.flip(np.flip(img, 0), 1)])
         return cls((raw_imgs_unaligned, raw_imgs), cols, rows)
 
     """
-    merge fragmented image cells back to original image.
+    assemble fragmented image cells back to original image.
     Modified Prim's MST algorithm. implemented Priority Queue with Linked Hashmap
     """
-    def merge(self):
+    def assemble(self):
         def _best_fit_cell_at(i, j):
             t_cnt = self.transformations_count
-            best_celldata = mr.CellData()
+            best_celldata = ds.CellData()
             for id in unused_ids: # for all remaining images
                 for adj in cellblock.active_neighbors(i, j): # for all adjacent images
                     for k in range(t_cnt * adj.dir, t_cnt * adj.dir + t_cnt): # for all transformations
                         score = self.sim_matrix[adj.id][id][self.idxmap(adj.transform, k)]
                         if (best_celldata.score < score or not best_celldata.is_valid()):
                             best_celldata.set(id, k % t_cnt, score, i, j, adj.dir)
-                            if mr.OPTIMIZE_STOP_SEARCH_THRESHOLD < score:
+                            if ds.OPTIMIZE_STOP_SEARCH_THRESHOLD < score:
                                 return best_celldata
             return best_celldata
 
@@ -70,7 +71,7 @@ class ImageMerger:
             cellblock.activate_cell(cdata)
             unused_ids.remove(cdata.id)
             print("image merged: ", cdata.tostring(), "\t", len(self.raw_imgs)-len(unused_ids), "/", len(self.raw_imgs))
-            self.merge_history.append({"cellblock": mr.CellBlock.copy(cellblock), "celldata": cdata})
+            self.merge_history.append({"cellblock": ds.CellBlock.copy(cellblock), "celldata": cdata})
             #print("current-cellblock:\n", cellblock.data)
             return cdata, duplicates
 
@@ -85,9 +86,9 @@ class ImageMerger:
         s_time = time.time()
         self.merge_history = [] # reset merge_history
         unused_ids = [*range(0, len(self.raw_imgs))] # remaining cells
-        cellblock = mr.CellBlock(self.rows, self.cols) # blueprint for image reconstruction
-        p_queue = mr.LHashmapPriorityQueue(len(self.raw_imgs)) # priority queue for MST algorithm
-        p_queue.enqueue(0, mr.CellData(0, 0, 1.0, cellblock.hs, cellblock.ws)) # source node
+        cellblock = ds.CellBlock(self.rows, self.cols) # blueprint for image reconstruction
+        p_queue = ds.LHashmapPriorityQueue(len(self.raw_imgs)) # priority queue for MST algorithm
+        p_queue.enqueue(0, ds.CellData(0, 0, 1.0, cellblock.hs, cellblock.ws)) # source node
 
         # The main loop
         while not p_queue.is_empty():
@@ -96,12 +97,12 @@ class ImageMerger:
                 _enqueue_all_frontiers(cellblock.inactive_neighbors(*cell.pos()) + duplicates)
             else:
                 p_queue.dequeue() # throw away any invalid cells
-        print("MST merge algorithm:", time.time() - s_time, "seconds")
+        print("MST assembly algorithm:", time.time() - s_time, "seconds")
 
     """
-    save merged image to file
+    save assembled image to file
     """
-    def save_merged_image(self, filepath):
+    def save_assembled_image(self, filepath):
         cellblock = self.merge_history[-1]["cellblock"]
         rt, ct, rs, cs = cellblock.ht, cellblock.wt, cellblock.hs, cellblock.ws
         cell_h, cell_w = len(self.raw_imgs[0][0]), len(self.raw_imgs[0][0][0])
@@ -118,8 +119,8 @@ class ImageMerger:
                     whiteboard[y_offset: y_offset + cell_h, x_offset: x_offset + cell_w] = paste
         cv2.imwrite(filepath + ".png", whiteboard)
 
-    def start_merge_animation(self, interval):
-        vis.start_merge_animation(self.merge_history, self.raw_imgs_unaligned,
+    def start_assemble_animation(self, interval):
+        vis.start_assemble_animation(self.merge_history, self.raw_imgs_unaligned,
                                     self.raw_imgs, self.rows, self.cols, interval)
 
     """===========Private Methods============"""
@@ -152,11 +153,11 @@ class ImageMerger:
         print("preprocessing:", time.time() - s_time, "seconds")
 
     def _construct_similaritymatrix_parallel(self, raw_imgs_norm, t_cnt):
-        if len(self.raw_imgs) < mr.SWITCH_TO_PARALLEL_THRESHOLD * 4 / t_cnt:
+        if len(self.raw_imgs) < ds.SWITCH_TO_PARALLEL_THRESHOLD * 4 / t_cnt:
             return False
         try:
             s_time = time.time()
-            with Pool(mr.MAX_PROCESS_COUNT, self._init_process, (np.array(raw_imgs_norm), t_cnt)) as pool:
+            with Pool(ds.MAX_PROCESS_COUNT, self._init_process, (np.array(raw_imgs_norm), t_cnt)) as pool:
                 print("child process creation overhead:", time.time() - s_time, "seconds")
                 s_time = time.time()
                 self.sim_matrix = np.reshape(pool.map(self._compute_elementwise_similarity,

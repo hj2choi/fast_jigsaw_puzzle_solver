@@ -1,4 +1,3 @@
-/images_out
-/images_temp
-config.ini
+images_out/
+image_fragments/
 test.sh

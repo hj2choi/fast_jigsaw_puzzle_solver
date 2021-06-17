@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from . import img_operations as im_op
-from . import merge_utils as mr
 
 MAX_PIECES_WINDOW_SIZE = (280,400) # height, width
 MAX_MERGE_ANIMATION_WINDOW_SIZE = (480, 800) # height, width
@@ -9,7 +8,7 @@ MAX_MERGE_ANIMATION_WINDOW_SIZE = (480, 800) # height, width
 """
 animation routine.
 """
-def start_merge_animation(merge_history, img_cells_unaligned, img_cells, rows, cols, interval_millis = 200):
+def start_assemble_animation(merge_history, img_cells_unaligned, img_cells, rows, cols, interval_millis = 200):
     if (len(merge_history) < 1):
         return
 
@@ -41,7 +40,7 @@ def _display_remaining_pieces(img_cells_unaligned, height, width, merge_id, inte
     whiteboard = np.zeros((window_h, window_w, 3), dtype = np.uint8)
     whiteboard.fill(255)
     for i in range(len(img_cells_unaligned)):
-        placeholder = np.full((max_cell_len, max_cell_len, 3), 240)
+        placeholder = np.full((max_cell_len, max_cell_len, 3), 245)
         paste = img_cells_unaligned[i][0]
         cell_h = len(paste)
         cell_w = len(paste[0])

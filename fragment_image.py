@@ -63,8 +63,8 @@ def resolve_ambiguous_filename(input_filepath):
 """
 def main(args, config):
     s_time = time.time()
-    random.seed(24) # for reproducibility
-    OUTPUT_DIR = config.get("config", "images_dir")
+    random.seed(32) # for reproducibility
+    OUTPUT_DIR = config.get("config", "fragments_dir")
     VERBOSE = config.getboolean("config", "debug") or len(args) >= 5 and args[4] == "-v" # enable VERBOSE option for debugging
     SOURCE_FILENAME = args[0]
     CUT_COLS = int(args[1])

@@ -35,9 +35,9 @@ fragment_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_pre
 <img src="https://hj2choi.github.io/images/external/cut_image.png" width="300" title="fragment image">
 </br>
 
-#### merge_image.py: re-assemble image fragments back to original image
+#### assemble_fragments.py: re-assemble image fragments back to original image
 ```bash
-merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [-v]
+assemble_fragments.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [-v]
 ```
 -v: *enable console log and show animation*<br/>
 <img src="https://hj2choi.github.io/images/external/merge_image.png" width="300" title="merge image">
@@ -45,11 +45,11 @@ merge_image.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 ## config.ini
 | Key | Description | Default |
 | :--- | --- | --- |
-| `images_dir` | directory to save fragmented images | images_temp/ |
+| `fragments_dir` | directory to save fragmented images | image_fragments/ |
 | `output_dir` | directory to save final merged image | images_out/ |
 | `debug` | enable console log | False |
-| `enable_merge_visualization` | show animation after merge is complete | False |
-| `animation_interval_millis` | milliseconds interval between each merge step in animation | 200 |
+| `enable_visualization` | show assembly animation after the process is complete | False |
+| `animation_interval_millis` | milliseconds interval between each merge step in animation | 100 |
 
 ## Optimization techniques and Time complexities
 <b>N</b>: number of images</br>
