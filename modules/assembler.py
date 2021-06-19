@@ -6,6 +6,15 @@ from . import img_operations as im_op
 from . import assembler_data_structures as ds
 from . import visualization_utils as vis
 
+#switch to parallel computation if data size reaches image count threshold
+MAX_PROCESS_COUNT = 3
+COMPUTE_PARALLEL_FRAGMENTS_THRESHOLD = 128 # number of images
+
+# stop search if the score is above threshold. set to 1 disable optimization.
+# WARNING: setting this value might sacrifice correctness of the assembly result.
+OPTIMIZE_STOP_SEARCH_THRESHOLD = 1
+
+
 class ImageAssembler:
     """
     ImageAssembler constructor. To be used with loadfromfilepath()
@@ -17,10 +26,10 @@ class ImageAssembler:
         self.rows, self.cols = rows, cols # as specified in args
         self.raw_imgs_unaligned = data[0] # for visualization
         self.raw_imgs = data[1] # image fragments with all combination of transformations
-        self.transformations_count = len(self.raw_imgs[0]) # number of possible transformation states
-        self.sim_matrix = np.zeros((len(self.raw_imgs), len(self.raw_imgs), self.transformations_count * 4))
-        self.idxmap = ds.map4 if self.transformations_count == 4 else ds.map8  # similarity matrix index mapper
-        self.mat_sym_dmap = ds.mat_sym_dmap16 if self.transformations_count == 4 else ds.mat_sym_dmap32  # matrix symmetry depth mapper
+        self.transforms_cnt = len(self.raw_imgs[0]) # number of possible transformation states
+        self.sim_matrix = np.zeros((len(self.raw_imgs), len(self.raw_imgs), self.transforms_cnt * 4))
+        self.idxmap = ds.map4 if self.transforms_cnt == 4 else ds.map8  # similarity matrix index mapper
+        self.mat_sym_dmapper = ds.mat_sym_dmap16 if self.transforms_cnt == 4 else ds.mat_sym_dmap32  # matrix symmetry depth mapper
         self.merge_history = [] # merge history from first merge to last
 
     """
@@ -45,7 +54,8 @@ class ImageAssembler:
                         raw_imgs_unaligned.append([img, np.flip(img, 1),
                                                     np.flip(img, 0), np.flip(np.flip(img, 0), 1)])
                         img = np.rot90(img) if len(img) > len(img[0]) else img
-                        raw_imgs.append([img, np.flip(img, 1), np.flip(img, 0), np.flip(np.flip(img, 0), 1)])
+                        raw_imgs.append([img, np.flip(img, 1), np.flip(img, 0),
+                                            np.flip(np.flip(img, 0), 1)])
         return cls((raw_imgs_unaligned, raw_imgs), cols, rows)
 
     """
@@ -54,7 +64,7 @@ class ImageAssembler:
     """
     def assemble(self):
         def _best_fit_cell_at(i, j):
-            t_cnt = self.transformations_count
+            t_cnt = self.transforms_cnt
             best_celldata = ds.CellData()
             for id in unused_ids: # for all remaining images
                 for adj in cellblock.active_neighbors(i, j): # for all adjacent images
@@ -62,7 +72,7 @@ class ImageAssembler:
                         score = self.sim_matrix[adj.id][id][self.idxmap(adj.transform, k)]
                         if (best_celldata.score < score or not best_celldata.is_valid()):
                             best_celldata.set(id, k % t_cnt, score, i, j, adj.dir)
-                            if ds.OPTIMIZE_STOP_SEARCH_THRESHOLD < score:
+                            if OPTIMIZE_STOP_SEARCH_THRESHOLD < score:
                                 return best_celldata
             return best_celldata
 
@@ -130,12 +140,12 @@ class ImageAssembler:
     shape of similarity matrix = (row, col, [16 or 32])
     """
     def _construct_similaritymatrix(self):
-        t_cnt = self.transformations_count
+        t_cnt = self.transforms_cnt
         raw_imgs_norm = np.array(self.raw_imgs) / 256 #normalize
 
         s_time = time.time()
         # try parallel preprocessing for large number of images
-        if not self._construct_similaritymatrix_parallel(raw_imgs_norm, t_cnt):
+        if not self._construct_similarity_matrix_parallel(raw_imgs_norm, t_cnt):
             # serial processing. Only compute for the upper triangular.
             for i in range(len(self.raw_imgs)):
                 for j in range(len(self.raw_imgs)):
@@ -149,20 +159,20 @@ class ImageAssembler:
             for j in range(len(self.raw_imgs)):
                 if (i > j):
                     for k in range(t_cnt * 4):
-                        self.sim_matrix[i][j][k] = self.sim_matrix[j][i][self.mat_sym_dmap(k)]
+                        self.sim_matrix[i][j][k] = self.sim_matrix[j][i][self.mat_sym_dmapper(k)]
         print("preprocessing:", time.time() - s_time, "seconds")
 
-    def _construct_similaritymatrix_parallel(self, raw_imgs_norm, t_cnt):
-        if len(self.raw_imgs) < ds.SWITCH_TO_PARALLEL_THRESHOLD * 4 / t_cnt:
+    def _construct_similarity_matrix_parallel(self, raw_imgs_norm, t_cnt):
+        if len(self.raw_imgs) < COMPUTE_PARALLEL_FRAGMENTS_THRESHOLD * 4 / t_cnt:
             return False
         try:
             s_time = time.time()
-            with Pool(ds.MAX_PROCESS_COUNT, self._init_process, (np.array(raw_imgs_norm), t_cnt)) as pool:
+            with Pool(MAX_PROCESS_COUNT, self._init_process, (np.array(raw_imgs_norm), t_cnt)) as pool:
                 print("child process creation overhead:", time.time() - s_time, "seconds")
                 s_time = time.time()
                 self.sim_matrix = np.reshape(pool.map(self._compute_elementwise_similarity,
-                                                    np.ndenumerate(np.copy(self.sim_matrix))),
-                                                    (len(self.raw_imgs), len(self.raw_imgs), t_cnt * 4))
+                                                np.ndenumerate(np.copy(self.sim_matrix))),
+                                                (len(self.raw_imgs), len(self.raw_imgs), t_cnt * 4))
             return True
         except Exception as e:
             print("Failed to start process")

@@ -8,12 +8,6 @@ DIR = {
     'r': (2, 0, 1),
     'l': (3, 0, -1),
 }
-#switch to parallel computation if data size reaches image count threshold
-MAX_PROCESS_COUNT = 3
-SWITCH_TO_PARALLEL_THRESHOLD = 128 # number of images
-
-# stop search if the score is above threshold. set to 1 disable optimization.
-OPTIMIZE_STOP_SEARCH_THRESHOLD = 1
 
 """
 Representation of image cell. id, orientation state, position
@@ -192,7 +186,8 @@ class LHashmapPriorityQueue:
         self.hashmap[returnnode.key].remove(returnnode)
         return returnnode.val
 
-    # remove duplicate image ids still in the hashmap.
+    # dequeue top priority node & remove all nodes with the same key from the l_hashmap.
+    # runtime = O(N)
     def dequeue_and_remove_duplicate_ids(self):
         if not self.ll_head:
             return None
@@ -223,6 +218,7 @@ possible src orientations = rotation x flip x 4directions = 4 * 2 * 4 = 32
 total possible cases = 32 x 8 tgt orientations = 32 x 8 = 256
 below is the mapping table for [256 possible cases] => [32 cases with fixed tgt orientation]
 """
+# index mapping table for rectangular image fragments
 _MAPPING_TABLE8 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
                 27, 24, 25, 26, 31, 28, 29, 30, 19, 16, 17, 18, 23, 20, 21, 22, 3, 0, 1, 2, 7, 4, 5, 6, 11, 8, 9, 10, 15, 12, 13, 14,
                 10, 11, 8, 9, 14, 15, 12, 13, 2, 3, 0, 1, 6, 7, 4, 5, 26, 27, 24, 25, 30, 31, 28, 29, 18, 19, 16, 17, 22, 23, 20, 21,
@@ -231,6 +227,7 @@ _MAPPING_TABLE8 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
                 29, 28, 31, 30, 25, 24, 27, 26, 21, 20, 23, 22, 17, 16, 19, 18, 13, 12, 15, 14, 9, 8, 11, 10, 5, 4, 7, 6, 1, 0, 3, 2,
                 6, 5, 4, 7, 2, 1, 0, 3, 14, 13, 12, 15, 10, 9, 8, 11, 30, 29, 28, 31, 26, 25, 24, 27, 22, 21, 20, 23, 18, 17, 16, 19,
                 23, 22, 21, 20, 19, 18, 17, 16, 31, 30, 29, 28, 27, 26, 25, 24, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8]
+
 """
 mapping for [64 cases] => [16 cases with fixed tgt]
 """
@@ -254,6 +251,9 @@ def mat_sym_dmap16(t):
 def mat_sym_dmap32(t):
     return [8, 19, 2, 25, 4, 21, 14, 31, 0, 27, 10, 17, 12, 29, 6, 23,
     24, 11, 18, 1, 28, 5, 22, 15, 16, 3, 26, 9, 20, 13, 30, 7][t]
+
+
+
 
 """
 Test routines
@@ -294,6 +294,9 @@ def _testpq():
     print(llhashmap.hashmap)
     llhashmap._testll()
 
+"""
+Automatically build index map for rectangular images. (Only run once)
+"""
 def _generate_mapping_table8(sim_matrix):
     mapping_table = []
     for i in range(len(sim_matrix[0][1])):
@@ -313,6 +316,9 @@ def _generate_mapping_table8(sim_matrix):
 
     print(mapping_table)
 
+"""
+Automatically build index map for square images. (Only run once)
+"""
 def _generate_mapping_table4(sim_matrix):
     print(sim_matrix[0][1])
     print(sim_matrix[1][0])

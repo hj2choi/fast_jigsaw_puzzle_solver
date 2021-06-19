@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 from . import img_operations as im_op
 
-MAX_PIECES_WINDOW_SIZE = (280,400) # height, width
-MAX_MERGE_ANIMATION_WINDOW_SIZE = (480, 800) # height, width
+MAX_PIECES_WINDOW_SIZE = (600,800) # height, width
+MAX_MERGE_ANIMATION_WINDOW_SIZE = (800, 1280) # height, width
 
 """
 animation routine.

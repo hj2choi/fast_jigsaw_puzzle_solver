@@ -3,6 +3,8 @@ from configparser import ConfigParser
 import numpy as np
 import cv2
 
+RANDOM_SEED = 32 # for reproducibility
+
 """
 wrapper functions for randomized transformation. initial random seed is set for reproducibility
 """
@@ -63,7 +65,7 @@ def resolve_ambiguous_filename(input_filepath):
 """
 def main(args, config):
     s_time = time.time()
-    random.seed(32) # for reproducibility
+    random.seed(RANDOM_SEED) # for reproducibility
     OUTPUT_DIR = config.get("config", "fragments_dir")
     VERBOSE = config.getboolean("config", "debug") or len(args) >= 5 and args[4] == "-v" # enable VERBOSE option for debugging
     SOURCE_FILENAME = args[0]
@@ -88,7 +90,7 @@ def main(args, config):
         for j in range(CUT_COLS):
             rs, cs = int(i * h), int(j * w) # row start, col start
             process_image_segment(img[rs: rs + h, cs: cs + w], OUTPUT_DIR + "/" + OUTPUT_PREFIX)
-    sys.stdout = sys.__stdout__ # resotre stdout
+    sys.stdout = sys.__stdout__ # restore stdout
     print("fragmented image into", CUT_ROWS * CUT_COLS,"slices. ")
     print(time.time() - s_time, "seconds elapsed")
 
