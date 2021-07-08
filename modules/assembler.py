@@ -80,7 +80,9 @@ class ImageAssembler:
             cdata, duplicates = p_queue.dequeue_and_remove_duplicate_ids()
             cellblock.activate_cell(cdata)
             unused_ids.remove(cdata.id)
-            print("image merged: ", cdata.tostring(), "\t", len(self.raw_imgs)-len(unused_ids), "/", len(self.raw_imgs))
+            print("image merged: ", cdata.tostring(), "\t",
+                    len(self.raw_imgs)-len(unused_ids), "/", len(self.raw_imgs)
+                    , flush=True)
             self.merge_history.append({"cellblock": ds.CellBlock.copy(cellblock), "celldata": cdata})
             #print("current-cellblock:\n", cellblock.data)
             return cdata, duplicates

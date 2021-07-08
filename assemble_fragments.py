@@ -16,7 +16,7 @@ def main(args, config):
 
     #initialize
     assembler = asm.ImageAssembler.loadfromfilepath(IMAGES_DIR, INPUT_FILENAME_PREFIX, PASTE_COLS, PASTE_ROWS)
-    print("merge_image.py:", len(assembler.raw_imgs), "files loaded")
+    print("merge_image.py:", len(assembler.raw_imgs), "files loaded", flush=True)
     if (assembler.rows * assembler.cols != len(assembler.raw_imgs)):
         print("WARNING: incorrect slicing dimension.")
     if not VERBOSE:
@@ -31,7 +31,7 @@ def main(args, config):
     assembler.save_assembled_image(OUTPUT_DIRECTORY + "/" + OUTPUT_FILENAME)
 
     sys.stdout = sys.__stdout__ #restore stdout
-    print("total elapsed time:", time.time() - s_time, "seconds")
+    print("total elapsed time:", time.time() - s_time, "seconds", flush=True)
     if ENABLE_VISUALIZATION:
         assembler.start_assemble_animation(ANIMATION_INTERVAL)
 
