@@ -83,7 +83,7 @@ class ImageAssembler:
             print("image merged: ", cdata.tostring(), "\t",
                     len(self.raw_imgs)-len(unused_ids), "/", len(self.raw_imgs)
                     , flush=True)
-            self.merge_history.append({"cellblock": ds.CellBlock.copy(cellblock), "celldata": cdata})
+            self.merge_history.append({"cellblock": ds.CellBlock.copy(cellblock), "celldata": ds.CellData.copy(cdata)})
             #print("current-cellblock:\n", cellblock.data)
             return cdata, duplicates
 

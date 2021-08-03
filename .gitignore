@@ -1,3 +1,11 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.$py.class
+
+# Directory for output files
 images_out/
 image_fragments/
+
+# test shell scripts
 test.sh

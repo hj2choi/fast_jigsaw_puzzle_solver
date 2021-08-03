@@ -14,11 +14,11 @@ Representation of image cell. id, orientation state, position
 """
 class CellData:
     def __init__(self, id = -1, transform = -1, score = -float("inf"), y = -1, x = -1, dir = -1):
-        self.id = id
-        self.transform = transform
-        self.score = score
-        self.y, self.x = y, x
-        self.dir = dir #stitching direction
+        self.id = id # unique id
+        self.transform = transform # 0~3 for rectangular images (x_flip*y_flip), 0~7 for square images (rotation90*x_flip*y_flip)
+        self.score = score # similarity score at which cell was stitched
+        self.y, self.x = y, x # cell's position inside the cellblock
+        self.dir = dir # stitching direction, 0~3 ('d','u','r','l')
     @classmethod
     def copy(cls, celldata):
         return cls(celldata.id, celldata.transform, celldata.score, celldata.y, celldata.x, celldata.dir)
@@ -29,7 +29,7 @@ class CellData:
         return self.__str__()
     def tostring(self):
         return ("{id: " + str(self.id) + ", t: " + str(self.transform) +
-                ", (" + str(self.y) + ", " + str(self.x) + "), score: " + format(self.score, ".4f") + " }")
+                ", (" + str(self.y) + ", " + str(self.x) + "), dir:" + str(self.dir) + ", score: " + format(self.score, ".4f") + " }")
 
     def set(self, id = -1, transform = -1, score = -float("inf"), y = -1, x = -1, dir = -1):
         if id != -1: self.id = id
@@ -56,9 +56,9 @@ blueprint for image reconstruction
 class CellBlock:
     def __init__(self, max_h, max_w, data = None, hs = -1, ht = -1, ws = -1, wt = -1, init = True):
         self.init = init # true if no cell has been activated yet
-        self.max_h, self.max_w = max_h, max_w # max allowed h,w
+        self.max_h, self.max_w = max_h, max_w # max allowed height and width
         self.length = max(max_h, max_w)*2 # cellblock data width & height
-        self.data = data # blueprint for image reconstruction
+        self.data = data # 2D array of celldata, blueprint for image reconstruction
         self.hs, self.ht = hs, ht # h start - terminal
         self.ws, self.wt = ws, wt # w start - terminal
         if self.init:
@@ -77,7 +77,7 @@ class CellBlock:
         for d in DIR.values():
             if (0 < i + d[1] and i + d[1] < self.length and 0 < j + d[2] and j + d[2] < self.length
                 and self.data[i + d[1]][j + d[2]].is_valid()):
-                adj.append(self.data[i + d[1]][j + d[2]].set(dir = d[0]))
+                adj.append(CellData.copy(self.data[i + d[1]][j + d[2]]).set(dir = d[0]))
         return adj
 
     def inactive_neighbors(self, i, j):

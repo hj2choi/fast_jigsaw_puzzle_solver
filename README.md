@@ -90,6 +90,9 @@ Q: priority queue
 
 ## TODO
 - migrate from opencv to pillow
+- use OS.path.join for filename input
+- use argumentParser to parse arguments.
+- create config folder and inject dependencies to assembler.py (parallel processing, optimization thresholds, etc)
 
 ### references and extra credits
 http://chenlab.ece.cornell.edu/people/Andy/publications/Andy_files/Gallagher_cvpr2012_puzzleAssembly.pdf</br>
@@ -97,5 +100,5 @@ http://www.bmva.org/bmvc/2016/papers/paper139/paper139.pdf</br>
 https://en.wikipedia.org/wiki/Prim%27s_algorithm</br>
 https://en.wikipedia.org/wiki/Priority_queue</br>
 https://github.com/python/cpython/blob/master/Lib/heapq.py</br>
-Hoon PAEK hoon.paek@mindslab.ai <br>
-Jaewook KIM jae.kim@mindslab.ai
+Hoon PAEK hoon.paek@mindslab.ai (problem description) <br>
+Jaewook KIM jae.kim@mindslab.ai (optimization ideas)
