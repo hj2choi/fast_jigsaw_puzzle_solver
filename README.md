@@ -100,5 +100,3 @@ http://www.bmva.org/bmvc/2016/papers/paper139/paper139.pdf</br>
 https://en.wikipedia.org/wiki/Prim%27s_algorithm</br>
 https://en.wikipedia.org/wiki/Priority_queue</br>
 https://github.com/python/cpython/blob/master/Lib/heapq.py</br>
-Hoon PAEK hoon.paek@mindslab.ai (problem description) <br>
-Jaewook KIM jae.kim@mindslab.ai (optimization ideas)
