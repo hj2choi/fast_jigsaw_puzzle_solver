@@ -2,9 +2,9 @@ import sys, os, time, threading, multiprocessing
 from multiprocessing import Pool
 import numpy as np
 import cv2
-import img_operations as im_op
-import assembler_data_structures as ds
-import visualization_utils as vis
+from . import img_operations as im_op
+from . import assembler_data_structures as ds
+from . import visualization_utils as vis
 
 # switch to parallel computation if data size reaches image count threshold
 MAX_PROCESS_COUNT = 3
@@ -142,7 +142,7 @@ class ImageAssembler:
 
     def start_assemble_animation(self, interval):
         vis.start_assemble_animation(self.merge_history, self.raw_imgs_unaligned,
-                                     self.raw_imgs, self.rows, self.cols, interval)
+                                     self.raw_imgs, interval)
 
     """===========Private Methods============"""
     def _construct_similarity_matrix(self):
