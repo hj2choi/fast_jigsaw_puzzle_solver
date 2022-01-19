@@ -6,13 +6,9 @@ from . import img_operations as im_op
 from . import assembler_data_structures as ds
 from . import visualization_utils as vis
 
-# switch to parallel computation if data size reaches image count threshold
-MAX_PROCESS_COUNT = 3
-COMPUTE_PARALLEL_FRAGMENTS_THRESHOLD = 128  # number of images
 
-# stop search if the score is above threshold. set to 1 disable optimization.
-# WARNING: setting this value might sacrifice correctness of the assembly result.
-OPTIMIZE_STOP_SEARCH_THRESHOLD = 1
+COMPUTE_PARALLEL_FRAGMENTS_THRESHOLD = 128  # switch to parallel computation if data size reaches image count threshold
+MAX_PROCESS_COUNT = 3  # the number of CPUs to be used to construct similarity matrix
 
 
 class ImageAssembler:
@@ -67,23 +63,35 @@ class ImageAssembler:
     def assemble(self):
         """
             assemble fragmented image cells back to original image.
-            Modified Prim's MST algorithm. implemented Priority Queue with Linked Hashmap
+            Prim's Minimum Spanning Tree algorithm with Linked Hashmap implementation of Priority Queue.
         """
 
-        def _best_fit_cell_at(i, j):
+        # initialization.
+        self._construct_similarity_matrix()
+        s_time = time.time()
+        self.merge_history = []  # reset merge_history
+        unused_ids = [*range(0, len(self.raw_imgs))]  # remaining cells
+        cellblock = ds.CellBlock(self.rows, self.cols)  # blueprint for image reconstruction
+        p_queue = ds.LHashmapPriorityQueue(len(self.raw_imgs))  # priority queue for MST algorithm
+        p_queue.enqueue(0, ds.CellData(0, 0, 1.0, cellblock.hs, cellblock.ws))  # source node
+
+        def _best_fit_cell_at(y, x):
+            # from the list of unmerged image cells, find one that can be most naturally stitched at position x, y
+            nonlocal cellblock, unused_ids
             t_cnt = self.transforms_cnt
             best_celldata = ds.CellData()
             for id in unused_ids:  # for all remaining images
-                for adj in cellblock.active_neighbors(i, j):  # for all adjacent images
+                for adj in cellblock.active_neighbors(y, x):  # for all adjacent images
                     for k in range(t_cnt * adj.dir, t_cnt * adj.dir + t_cnt):  # for all transformations
                         score = self.sim_matrix[adj.id][id][self.idxmap(adj.transform, k)]
                         if best_celldata.score < score or not best_celldata.is_valid():
-                            best_celldata.set(id, k % t_cnt, score, i, j, adj.dir)
-                            if OPTIMIZE_STOP_SEARCH_THRESHOLD < score:
-                                return best_celldata
+                            best_celldata.set(id, k % t_cnt, score, y, x, adj.dir)
             return best_celldata
 
         def _dequeue_and_merge():
+            # dequeue image cell from the priority queue and place it on the cellblock.
+            # Then, remove all duplicate image cells from the priority queue.
+            nonlocal p_queue, cellblock, unused_ids
             cdata, duplicates = p_queue.dequeue_and_remove_duplicate_ids()
             cellblock.activate_cell(cdata)
             unused_ids.remove(cdata.id)
@@ -95,28 +103,25 @@ class ImageAssembler:
             return cdata, duplicates
 
         def _enqueue_all_frontiers(frontier_cells_list):
+            # for all next possible image cell placement positions, find best fit cell and append to the priority queue.
+            nonlocal p_queue, cellblock
             for frontier in frontier_cells_list:
                 if cellblock.validate_pos(*frontier.pos()):
                     cdata = _best_fit_cell_at(*frontier.pos())
                     if cdata.is_valid():
                         p_queue.enqueue(cdata.id, cdata)
 
-        # initialization
-        self._construct_similarity_matrix()
-        s_time = time.time()
-        self.merge_history = []  # reset merge_history
-        unused_ids = [*range(0, len(self.raw_imgs))]  # remaining cells
-        cellblock = ds.CellBlock(self.rows, self.cols)  # blueprint for image reconstruction
-        p_queue = ds.LHashmapPriorityQueue(len(self.raw_imgs))  # priority queue for MST algorithm
-        p_queue.enqueue(0, ds.CellData(0, 0, 1.0, cellblock.hs, cellblock.ws))  # source node
-
-        """=========== The main assembly algorithm loop ============"""
+        # the main MST assembly algorithm loop
         while not p_queue.is_empty():
-            if cellblock.validate_pos(*p_queue.peek().pos()):
-                cell, duplicates = _dequeue_and_merge()
-                _enqueue_all_frontiers(cellblock.inactive_neighbors(*cell.pos()) + duplicates)
-            else:
-                p_queue.dequeue()  # throw away any invalid cells
+            # do not consider position that's already used up.
+            if not cellblock.validate_pos(*p_queue.peek().pos()):
+                p_queue.dequeue()
+                continue
+            # dequeue image cell from the priority queue, and merge it towards the final image form.
+            cell, duplicates = _dequeue_and_merge()
+            # add best fit image cell at all frontier positions to the priority queue
+            _enqueue_all_frontiers(cellblock.inactive_neighbors(*cell.pos()) + duplicates)
+
         print("MST assembly algorithm:", time.time() - s_time, "seconds")
 
     def save_assembled_image(self, filepath):
@@ -144,7 +149,10 @@ class ImageAssembler:
         vis.start_assemble_animation(self.merge_history, self.raw_imgs_unaligned,
                                      self.raw_imgs, interval)
 
-    """===========Private Methods============"""
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        private methods
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
     def _construct_similarity_matrix(self):
         """
             construct similarity matrix for all image pairs,

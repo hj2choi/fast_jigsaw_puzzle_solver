@@ -1,18 +1,12 @@
 # Fast Jigsaw Puzzle Solver with unknown orientation
-- Fragment image into <b>N</b> (Row x Col) slices of random orientations</br>
-- Re-assemble <b>N</b> image fragments back to original image in <b>O(N<sup>2</sup>)</b> runtime</br>
+- Fragments image into <b>N</b> (Row x Col) slices of random orientations</br>
+- Re-assemble <b>N</b> image fragments back to original image in <b>O(N<sup>2</sup>)</b> time complexity</br>
 ![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver.gif)</br>
 <i>Disclaimer: algorithm correctness is NOT guaranteed</i></br>
 
 ### Features
-  - N x N x 32 (all 8 orientations & 4 stitching directions) shaped <b>similarity-matrix</b> built with <b>euclidean distance</b> metric<br>
-  - Prim's <b>Minimum Spanning Tree</b> algorithm<br>
-  - <b>Linked-Hashmap</b> implementation of Priority Queue<br>
-  - <b>Parallel processing</b></br>
-  </br>
-  <b>~0.45 seconds</b> for assembling <b>N = 49</b> image fragments</br>
-  <b>2.6 ~ 3.1 seconds</b> for assembling <b>N = 168</b> image fragments (with parallel processing)</br>
-  <i>(tested using 1215x717 image, with Ubuntu 18.04, AMD Ryzen 7 3700X processor)</i> </br>
+  - N x N x 32 (8 orientations & 4 stitching directions) <b>distance-matrix</b> computation with <b>parallel processing</b><br>
+  - Prim's <b>Minimum Spanning Tree</b> algorithm with <b>Linked-Hashmap</b> implementation of Priority Queue<br>
 
 
 ### Dependencies
@@ -51,22 +45,6 @@ assemble_fragments.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_fi
 | `enable_visualization` | show assembly animation after the process is complete | False |
 | `animation_interval_millis` | milliseconds interval between each merge step in animation | 100 |
 
-## Optimization techniques and Time complexities
-<b>N</b>: number of images</br>
-<b>C</b>: total cache miss (number of duplicate images to be removed from queue)</br>
-in all cases, <b>C = O(N)</b></br>
-| Operations \ Algorithms | brute-force<br><br><br> | brute-force</br><sub><sup><i>index mapping</i></br><i>hashmap</i></sub></sup> | Prim's MST</br><sub><sup><i>max-heap</i></sub></sup><br><br> | Prim's MST</br><sub><sup><i>linked-hashmap</i></sub></sup></br><sub><sup><i>matrix symmetry</i></sub></sup> |
-| :--- | :---: | :---: | :---: | :---: |
-| <i>similarity matrix</i> | <i>O(256N<sup>2</sup>) | <i><b>O(32N<sup>2</sup>)</b> | <i>O(32N<sup>2</sup>) | <i><b>O(16N<sup>2</sup>)</b></i> |
-| traverse all images | O(N) | O(N) | O(N) | O(N) |
-| traverse all positions | O(4N) | O(4N) | - | - |
-| argmax(img at pos(x,y)) | O(256N) | <b>O(32N)</b> | O(32N) | O(32N) |
-| validate cellblock shape | O(4N) | <b>O(1)</b> | <b>O(1)</b> | O(1) |
-| <i>(PQueue)</i> remove by ID | - | <b>O(C)</b> | <b>O(ClogN)</b> | <b>O(C)</b> |
-| <i>(PQueue)</i> extract_min() | - | - | O(logN) | <b>O(1)</b> |
-| <i>(PQueue)</i> enqueue  | - | - | O(logN) | O(N) |
-| <b>Total time complexity</b> | <i>O(256N<sup>2</sup>)</i></br>+<b>O(4096N<sup>4</sup>)</b> | <b><i>O(32N<sup>2</sup>)</i></b></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(128N<sup>3</sup>)</b> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(3CNlogN)</b></br> | <i><b>O(16N<sup>2</sup>)</b></i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(N(C+N))</b> |
-
 ## image assembly algorithm (modified Prim's Minimum Spanning Tree)
 ```
 I[i,t]: all image fragments (image, transformation)
@@ -87,6 +65,23 @@ Q: priority queue
 11        Q.enqueue(w)
 12    Q.removeAllDuplicates(v.im)
 ```
+
+## Time complexity analysis
+<b>N</b>: number of images</br>
+<b>C</b>: total cache miss (number of duplicate images to be removed from queue)</br>
+in all cases, <b>C = O(N)</b></br>
+
+| Operations \ Algorithms | brute-force<br><br><br> | brute-force</br><sub><sup><i>index mapping</i></br><i>hashmap</i></sub></sup> | Prim's MST</br><sub><sup><i>max-heap</i></sub></sup><br><br> | Prim's MST</br><sub><sup><i>linked-hashmap</i></sub></sup></br><sub><sup><i>matrix symmetry</i></sub></sup> |
+| :---------------------------- | :---: | :---: | :---: | :---: |
+| <i>similarity matrix</i>      | <i>O(256N<sup>2</sup>) | <i><b>O(32N<sup>2</sup>)</b> | <i>O(32N<sup>2</sup>) | <i><b>O(16N<sup>2</sup>)</b></i> |
+| traverse all images           | O(N) | O(N) | O(N) | O(N) |
+| traverse all positions        | O(4N) | O(4N) | - | - |
+| argmax(img at pos(x,y))       | O(256N) | <b>O(32N)</b> | O(32N) | O(32N) |
+| validate cellblock shape      | O(4N) | <b>O(1)</b> | <b>O(1)</b> | O(1) |
+| <i>(PQueue)</i> remove by ID  | - | <b>O(C)</b> | <b>O(ClogN)</b> | <b>O(C)</b> |
+| <i>(PQueue)</i> extract_min() | - | - | O(logN) | <b>O(1)</b> |
+| <i>(PQueue)</i> enqueue       | - | - | O(logN) | O(N) |
+| <b>Total time complexity</b>  | <i>O(256N<sup>2</sup>)</i></br>+<b>O(4096N<sup>4</sup>)</b> | <b><i>O(32N<sup>2</sup>)</i></b></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(128N<sup>3</sup>)</b> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(3CNlogN)</b></br> | <i><b>O(16N<sup>2</sup>)</b></i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(N(C+N))</b> |
 
 ## TODO
 - migrate from opencv to pillow
