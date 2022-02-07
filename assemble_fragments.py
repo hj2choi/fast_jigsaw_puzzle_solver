@@ -3,7 +3,7 @@ import sys
 import time
 from configparser import ConfigParser
 
-from modules import assembler as asm
+from src import assembler as asm
 
 
 def main(args, cfg):
@@ -22,7 +22,7 @@ def main(args, cfg):
     # initialize
     assembler = asm.ImageAssembler.load_from_filepath(images_dir, input_filename_prefix, paste_cols, paste_rows)
     print("merge_image.py:", len(assembler.raw_imgs), "files loaded", flush=True)
-    if assembler.rows * assembler.cols != len(assembler.raw_imgs):
+    if assembler.max_rows * assembler.max_cols != len(assembler.raw_imgs):
         print("WARNING: incorrect slicing dimension.")
     if not verbose:
         sys.stdout = open(os.devnull, 'w')  # block stdout
