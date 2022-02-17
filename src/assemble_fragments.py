@@ -3,7 +3,7 @@ import sys
 import time
 from configparser import ConfigParser
 
-from src import assembler as asm
+from assembler import assembler as asm
 
 
 def main(args, cfg):
@@ -43,5 +43,5 @@ def main(args, cfg):
 
 if __name__ == '__main__':
     config = ConfigParser()
-    config.read("config.ini")
+    config.read("./config/config.ini")
     main(sys.argv[1:], config)

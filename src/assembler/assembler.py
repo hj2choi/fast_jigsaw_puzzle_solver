@@ -9,9 +9,12 @@ from multiprocessing import Pool
 import cv2
 import numpy as np
 
-from src import assembler_helpers as helpers
-from src import assembler_visualizer as vis
-from src.assembler_data_structures import CellData, CellBlock, LHashmapPriorityQueue
+from . import assembler_helpers as helpers
+from . import assembler_visualizer as vis
+from .assembler_data_structures import CellData, CellBlock, LHashmapPriorityQueue
+#import src.assembler.assembler_helpers as helpers
+#import src.assembler.assembler_visualizer as vis
+#from src.assembler.assembler_data_structures import CellData, CellBlock, LHashmapPriorityQueue
 
 COMPUTE_PARALLEL_FRAGMENTS_THRESHOLD = 128  # compute similarity matrix in parallel for number of images above threshold
 MAX_PROCESS_COUNT = 3  # the number of CPUs to be used to construct similarity matrix

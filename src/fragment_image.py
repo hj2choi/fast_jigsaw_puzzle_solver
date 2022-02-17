@@ -59,7 +59,7 @@ def resolve_ambiguous_filename(input_filepath):
         pwd = input_filepath.split("/")
         filename = pwd[-1]
         path_str = "/".join(pwd[:-1]) if len(pwd) > 1 else "."
-        for path, dir, files in os.walk("./"):
+        for path, dir, files in os.walk("/"):
             for file in files:
                 if file.startswith(filename) and len(file.split(".")[0]) == len(filename):
                     # print("did you mean", path + "/" + file,"?")
@@ -105,5 +105,5 @@ def main(args, cfg):
 
 if __name__ == '__main__':
     config = ConfigParser()
-    config.read("config.ini")
+    config.read("./config/config.ini")
     main(sys.argv[1:], config)
