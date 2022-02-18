@@ -12,9 +12,9 @@ import numpy as np
 from . import assembler_helpers as helpers
 from . import assembler_visualizer as vis
 from .assembler_data_structures import CellData, CellBlock, LHashmapPriorityQueue
-#import src.assembler.assembler_helpers as helpers
-#import src.assembler.assembler_visualizer as vis
-#from src.assembler.assembler_data_structures import CellData, CellBlock, LHashmapPriorityQueue
+#import jigsaw_puzzle_solver.assembler.assembler_helpers as helpers
+#import jigsaw_puzzle_solver.assembler.assembler_visualizer as vis
+#from jigsaw_puzzle_solver.assembler.assembler_data_structures import CellData, CellBlock, LHashmapPriorityQueue
 
 COMPUTE_PARALLEL_FRAGMENTS_THRESHOLD = 128  # compute similarity matrix in parallel for number of images above threshold
 MAX_PROCESS_COUNT = 3  # the number of CPUs to be used to construct similarity matrix
@@ -25,7 +25,7 @@ class ImageAssembler:
     Image assembler class.
 
     Usage:
-        from src.assembler import imageAssembler
+        from jigsaw_puzzle_solver.assembler import imageAssembler
         assembler = ImageAssembler.load_from_filepath(directory, prefix, max_cols, max_rows)
         assembler.assemble()
         assembler.start_assemble_animation()
