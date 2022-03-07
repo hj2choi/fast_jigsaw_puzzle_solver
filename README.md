@@ -18,7 +18,7 @@ opencv-python 4.5.1.48
 ### Quickstart: quick demo with animation
 ```bash
 pip install -r requirements.txt
-bash quickstart.sh
+bash demo.sh
 ```
 
 #### fragment_image.py: slice and randomly transform image
@@ -73,23 +73,18 @@ in all cases, <b>C = O(N)</b></br>
 
 | Operations \ Algorithms | brute-force<br><br><br> | brute-force</br><sub><sup><i>index mapping</i></br><i>hashmap</i></sub></sup> | Prim's MST</br><sub><sup><i>max-heap</i></sub></sup><br><br> | Prim's MST</br><sub><sup><i>linked-hashmap</i></sub></sup></br><sub><sup><i>matrix symmetry</i></sub></sup> |
 | :---------------------------- | :---: | :---: | :---: | :---: |
-| <i>similarity matrix</i>      | <i>O(256N<sup>2</sup>) | <i><b>O(32N<sup>2</sup>)</b> | <i>O(32N<sup>2</sup>) | <i><b>O(16N<sup>2</sup>)</b></i> |
+| <i>similarity matrix</i>      | <i>O(256N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i><b>O(16N<sup>2</sup>)</b></i> |
 | traverse all images           | O(N) | O(N) | O(N) | O(N) |
 | traverse all positions        | O(4N) | O(4N) | - | - |
 | argmax(img at pos(x,y))       | O(256N) | <b>O(32N)</b> | O(32N) | O(32N) |
-| validate cellblock shape      | O(4N) | <b>O(1)</b> | <b>O(1)</b> | O(1) |
-| <i>(PQueue)</i> remove by ID  | - | <b>O(C)</b> | <b>O(ClogN)</b> | <b>O(C)</b> |
+| validate cellblock shape      | O(4N) | <b>O(1)</b> | O(1) | O(1) |
+| <i>(PQueue)</i> remove by ID  | - | O(C) | O(ClogN) | <b>O(C)</b> |
 | <i>(PQueue)</i> extract_min() | - | - | O(logN) | <b>O(1)</b> |
-| <i>(PQueue)</i> enqueue       | - | - | O(logN) | O(N) |
-| <b>Total time complexity</b>  | <i>O(256N<sup>2</sup>)</i></br>+<b>O(4096N<sup>4</sup>)</b> | <b><i>O(32N<sup>2</sup>)</i></b></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(128N<sup>3</sup>)</b> | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(3CNlogN)</b></br> | <i><b>O(16N<sup>2</sup>)</b></i></br>+O(32(C+N<sup>2</sup>))</br>+<b>O(N(C+N))</b> |
+| <i>(PQueue)</i> enqueue       | - | - | <b>O(logN)</b> | O(N) |
+| <b>Total time complexity</b> | <i>O(256N<sup>2</sup>)</i></br>+O(4096N<sup>4</sup>) | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(128N<sup>3</sup>) | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(3CNlog(N))</br> | <i>O(16N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(N(C+N)) |
+| <b>=</b>  | O(N<sup>4</sup>) | O(N<sup>3</sup>) | O(N<sup>2</sup>log(N)) | <b>O(N<sup>2</sup>)</b> |
 
-## TODO
-- migrate from opencv to pillow
-- use OS.path.join for filename input
-- use argumentParser to parse arguments.
-- create config folder and inject dependencies to assembler.py (parallel processing, optimization thresholds, etc)
-
-### references and extra credits
+### references
 http://chenlab.ece.cornell.edu/people/Andy/publications/Andy_files/Gallagher_cvpr2012_puzzleAssembly.pdf</br>
 http://www.bmva.org/bmvc/2016/papers/paper139/paper139.pdf</br>
 https://en.wikipedia.org/wiki/Prim%27s_algorithm</br>
