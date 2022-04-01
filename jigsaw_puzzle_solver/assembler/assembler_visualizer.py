@@ -70,9 +70,9 @@ def _display_from_cellblock(merge, img_cells_unaligned, img_cells, height, width
     """
 
     global merged_id_list
-    cellblock = merge["cellblock"].data
+    cellblock = merge["cellblock"]._data
     celldata = merge["celldata"]
-    rt, ct, rs, cs = merge["cellblock"].ht, merge["cellblock"].wt, merge["cellblock"].hs, merge["cellblock"].ws
+    rt, ct, rs, cs = merge["cellblock"]._ht, merge["cellblock"]._wt, merge["cellblock"]._hs, merge["cellblock"]._ws
 
     max_h = MAX_MERGE_ANIMATION_WINDOW_SIZE[0]
     max_w = MAX_MERGE_ANIMATION_WINDOW_SIZE[1]

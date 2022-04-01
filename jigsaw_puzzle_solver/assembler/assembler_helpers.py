@@ -67,11 +67,11 @@ def img_borders_similarity(img1, img2, dir):
     description of map8(tgt_transform, src_transform):
     
     given a fixed orientation of target image cell,
-    possible jigsaw_puzzle_solver orientations = rotation x flip x 4directions = 4 * 2 * 4 = 32
+    possible src orientations = rotation x flip x 4directions = 4 * 2 * 4 = 32
                  [0~7]
-                  jigsaw_puzzle_solver
-      [16~23] jigsaw_puzzle_solver tgt jigsaw_puzzle_solver [24~31]
-                  jigsaw_puzzle_solver
+                  src
+      [16~23] src tgt src [24~31]
+                  src
                  [8~15]
     total possible cases = 32 x 8 tgt cell orientations = 32 x 8 = 256
     below is the mapping table for [256 possible cases] => [32 cases with fixed tgt orientation]

@@ -4,6 +4,7 @@
 
 import os
 import time
+import copy
 from multiprocessing import Pool
 
 import cv2
@@ -97,15 +98,6 @@ class ImageAssembler:
             Prim's Minimum Spanning Tree algorithm with Linked Hashmap implementation of Priority Queue.
         """
 
-        # initialization.
-        self._construct_similarity_matrix()
-        s_time = time.time()
-        self.merge_history = []  # reset merge_history
-        unused_ids = [*range(0, len(self.raw_imgs))]  # remaining cells
-        cellblock = CellBlock(self.max_rows, self.max_cols)  # blueprint for image reconstruction
-        p_queue = LHashmapPriorityQueue(len(self.raw_imgs))  # priority queue for MST algorithm
-        p_queue.enqueue(0, CellData(0, 0, 1.0, cellblock.hs, cellblock.ws))  # source node
-
         def _best_fit_cell_at(y, x):
             # from the list of unmerged image cells, find one that can be most naturally stitched at position x, y
             nonlocal cellblock, unused_ids
@@ -128,7 +120,7 @@ class ImageAssembler:
             unused_ids.remove(cdata.id)
             print("image merged: ", cdata.tostring(), "\t",
                   len(self.raw_imgs) - len(unused_ids), "/", len(self.raw_imgs), flush=True)
-            self.merge_history.append({"cellblock": CellBlock.copy(cellblock), "celldata": CellData.copy(cdata)})
+            self.merge_history.append({"cellblock": copy.deepcopy(cellblock), "celldata": copy.deepcopy(cdata)})
             # print("current-cellblock:\n", cellblock.data)
             return cdata, duplicates
 
@@ -140,6 +132,15 @@ class ImageAssembler:
                     cdata = _best_fit_cell_at(*frontier.pos())
                     if cdata.is_valid():
                         p_queue.enqueue(cdata.id, cdata)
+
+        # initialization.
+        self._construct_similarity_matrix()
+        s_time = time.time()
+        self.merge_history = []  # reset merge_history
+        unused_ids = [*range(0, len(self.raw_imgs))]  # remaining cells
+        cellblock = CellBlock(self.max_rows, self.max_cols)  # blueprint for image reconstruction
+        p_queue = LHashmapPriorityQueue(len(self.raw_imgs))  # priority queue for MST algorithm
+        p_queue.enqueue(0, CellData(0, 0, 1.0, cellblock._hs, cellblock._ws))  # source node
 
         # the main MST assembly algorithm loop
         while not p_queue.is_empty():
@@ -160,15 +161,15 @@ class ImageAssembler:
         """
 
         cellblock = self.merge_history[-1]["cellblock"]
-        rt, ct, rs, cs = cellblock.ht, cellblock.wt, cellblock.hs, cellblock.ws
+        rt, ct, rs, cs = cellblock._ht, cellblock._wt, cellblock._hs, cellblock._ws
         cell_h, cell_w = len(self.raw_imgs[0][0]), len(self.raw_imgs[0][0][0])
         cellblock_h, cellblock_w = (rt - rs + 1) * cell_h, (ct - cs + 1) * cell_w
 
         whiteboard = np.zeros((cellblock_h, cellblock_w, 3), dtype=np.uint8)
         whiteboard.fill(0)
-        for i in range(cellblock._length):
-            for j in range(cellblock._length):
-                celldata = cellblock.data[i][j]
+        for i in range(cellblock._data_len):
+            for j in range(cellblock._data_len):
+                celldata = cellblock._data[i][j]
                 if celldata.is_valid():
                     paste = self.raw_imgs[celldata.id][celldata.transform]
                     y_offset, x_offset = (i - rs) * cell_h, (j - cs) * cell_w

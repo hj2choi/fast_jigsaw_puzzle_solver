@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 # direction ENUM
 DIR = {
@@ -22,10 +23,10 @@ class CellData:
         dir (int): stitching direction [0~3]
 
     Methods:
-        copy(CellData) -> CellData
+        deepcopy(CellData) -> CellData
         __str__() -> str
         __repr__() -> str
-        __lt__(other: CellData) -> bool: overrides compar operator
+        __lt__(other: CellData) -> bool: overrides compare operator
         tostring() -> str
         set(id: int, transform: int, score: float, y: int, x: int, dir: int)
         is_valid() -> bool
@@ -40,11 +41,6 @@ class CellData:
         self.score = score  # similarity score at which cell was stitched
         self.y, self.x = y, x  # cell's position inside the cellblock
         self.dir = dir  # stitching direction, 0~3 ('d','u','r','l')
-
-    @classmethod
-    def copy(cls, celldata):
-        # deep copy
-        return cls(celldata.id, celldata.transform, celldata.score, celldata.y, celldata.x, celldata.dir)
 
     def __str__(self):
         return str(self.id) if self.is_valid() else "-"
@@ -95,7 +91,7 @@ class CellBlock:
         data: 2d list of CellData
 
     Methods:
-        copy(CellData) -> CellData
+        deepcopy(CellData) -> CellData
         __str__() -> str
         __repr__() -> str
         __lt__(other: CellData) -> bool: overrides comparator operator
@@ -109,45 +105,40 @@ class CellBlock:
     def __init__(self, max_h, max_w, data=None, hs=-1, ht=-1, ws=-1, wt=-1, init=True):
         self._init = init  # true if no cell has been activated yet
         self.max_h, self.max_w = max_h, max_w  # max allowed height and width
-        self._length = max(max_h, max_w) * 2  # cellblock 2D array width & height
-        self.data = data  # 2D array of celldata, blueprint for image reconstruction
-        self.hs, self.ht = hs, ht  # h start - end
-        self.ws, self.wt = ws, wt  # w start - end
+        self._data_len = max(max_h, max_w) * 2  # allocated width & height of data (2d list of CellData)
+        self._data = data  # 2D array of celldata, blueprint for image reconstruction
+        self._hs, self._ht = hs, ht  # h start - end
+        self._ws, self._wt = ws, wt  # w start - end
         if self._init:
-            self.data = np.array([[CellData(y=i, x=j) for j in range(self._length)] for i in range(self._length)])
+            self._data = np.array([[CellData(y=i, x=j) for j in range(self._data_len)] for i in range(self._data_len)])
             half_length = max(max_h, max_w)
-            self.hs = self.ht = self.ws = self.wt = half_length
-
-    @classmethod
-    def copy(cls, cblock):
-        return cls(cblock.max_h, cblock.max_w, np.copy(cblock.data),
-                   cblock.hs, cblock.ht, cblock.ws, cblock.wt, False)
+            self._hs = self._ht = self._ws = self._wt = half_length
 
     def active_neighbors(self, y, x):
         adj = []
         for d in DIR.values():
-            if (0 < y + d[1] < self._length and 0 < x + d[2] < self._length
-                    and self.data[y + d[1]][x + d[2]].is_valid()):
-                adj.append(CellData.copy(self.data[y + d[1]][x + d[2]]).set(dir=d[0]))
+            if (0 < y + d[1] < self._data_len and 0 < x + d[2] < self._data_len
+                    and self._data[y + d[1]][x + d[2]].is_valid()):
+                adj.append(copy.deepcopy(self._data[y + d[1]][x + d[2]]).set(dir=d[0]))
         return adj
 
     def inactive_neighbors(self, y, x):
         adj = []
         for d in DIR.values():
-            if (0 < y + d[1] < self._length and 0 < x + d[2] < self._length
-                    and not self.data[y + d[1]][x + d[2]].is_valid()):
-                if self.validate_pos(y + d[1], x + d[2]): adj.append(self.data[y + d[1]][x + d[2]])
+            if (0 < y + d[1] < self._data_len and 0 < x + d[2] < self._data_len
+                    and not self._data[y + d[1]][x + d[2]].is_valid()):
+                if self.validate_pos(y + d[1], x + d[2]): adj.append(self._data[y + d[1]][x + d[2]])
         return adj
 
     def validate_pos(self, y, x):
         """
             check if cell can be activated at position y, x
         """
-        if (not self.data[y][x].is_valid() and 0 < len(self.active_neighbors(y, x))) or self._init:
-            updated_h, updated_w = self.ht - self.hs, self.wt - self.ws
-            if y < self.hs or self.ht < y:
+        if (not self._data[y][x].is_valid() and 0 < len(self.active_neighbors(y, x))) or self._init:
+            updated_h, updated_w = self._ht - self._hs, self._wt - self._ws
+            if y < self._hs or self._ht < y:
                 updated_h += 1
-            if x < self.ws or self.wt < x:
+            if x < self._ws or self._wt < x:
                 updated_w += 1
             return ((updated_h < self.max_h and updated_w < self.max_w) or
                     (updated_h < self.max_w and updated_w < self.max_h))
@@ -163,18 +154,18 @@ class CellBlock:
         """
 
         self._init = False
-        self.data[celldata.y][celldata.x] = celldata
-        if celldata.y > self.ht:
-            self.ht += 1
-        if celldata.y < self.hs:
-            self.hs -= 1
-        if celldata.x > self.wt:
-            self.wt += 1
-        if celldata.x < self.ws:
-            self.ws -= 1
+        self._data[celldata.y][celldata.x] = celldata
+        if celldata.y > self._ht:
+            self._ht += 1
+        if celldata.y < self._hs:
+            self._hs -= 1
+        if celldata.x > self._wt:
+            self._wt += 1
+        if celldata.x < self._ws:
+            self._ws -= 1
 
     def size(self):
-        return self.ht - self.hs + 1, self.wt - self.ws + 1
+        return self._ht - self._hs + 1, self._wt - self._ws + 1
 
 
 class LHashmapPriorityQueue:

@@ -1,11 +1,11 @@
 # Fast Jigsaw Puzzle Solver with unknown orientation
-- Fragments image into <b>N</b> (Row x Col) slices of random orientations</br>
+- Fragments image into <b>N</b> (row x col) slices of random orientations</br>
 - Re-assemble <b>N</b> image fragments back to original image in <b>O(N<sup>2</sup>)</b> time complexity</br>
 ![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver.gif)</br>
-<i>Disclaimer: algorithm correctness is NOT guaranteed</i></br>
+<i>Disclaimer: successful reconstruction is not guaranteed</i>
 
 ### Features
-  - N x N x 32 (8 orientations & 4 stitching directions) <b>distance-matrix</b> computation with <b>parallel processing</b><br>
+  - distance-matrix computation with <b>parallel processing</b><br>
   - Prim's <b>Minimum Spanning Tree</b> algorithm with <b>Linked-Hashmap</b> implementation of Priority Queue<br>
 
 
@@ -15,7 +15,7 @@ numpy 1.20.2<br>
 opencv-python 4.5.1.48
 
 ## Execution guide
-### Quickstart: quick demo with animation
+### Quick demo with animation
 ```bash
 pip install -r requirements.txt
 bash demo.sh
@@ -25,7 +25,7 @@ bash demo.sh
 ```bash
 fragment_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [-v]
 ```
--v: *enable console log*</br>
+-v: *output log*</br>
 <img src="https://hj2choi.github.io/images/external/cut_image.png" width="300" title="fragment image">
 </br>
 
@@ -33,7 +33,7 @@ fragment_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_pre
 ```bash
 assemble_fragments.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [-v]
 ```
--v: *enable console log and show animation*<br/>
+-v: *output log and show animation*<br/>
 <img src="https://hj2choi.github.io/images/external/merge_image.png" width="300" title="merge image">
 
 ## config.ini
