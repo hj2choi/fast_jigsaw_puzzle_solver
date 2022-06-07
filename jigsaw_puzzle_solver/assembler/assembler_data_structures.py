@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 
-# direction ENUM
+# direction ENUM (id, y delta, x delta)
 DIR = {
     'd': (0, 1, 0),
     'u': (1, -1, 0),
@@ -171,7 +171,7 @@ class CellBlock:
 class LHashmapPriorityQueue:
     """
     Linked Hashmap implementation for Priority Queue
-    {key(int): val(Comparable)}
+    {key(int): val(Comparable object)}
 
                         max-heap vs linked-hashmap
     enqueue()           O(logN)     O(N)
@@ -184,10 +184,10 @@ class LHashmapPriorityQueue:
 
     Methods:
         is_empty() -> bool
-        peek() -> object
+        peek() -> comparable object
         enqueue(key, val) -> void
-        dequeue() -> object
-        dequeue_and_remove_duplicate_ids() -> object, list of objects
+        dequeue() -> comparable object
+        dequeue_and_remove_duplicate_ids() -> comparable object, list of comparable objects
 
     """
 

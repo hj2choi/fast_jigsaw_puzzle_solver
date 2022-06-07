@@ -2,7 +2,7 @@
 - Fragments image into <b>N</b> (row x col) slices of random orientations</br>
 - Re-assemble <b>N</b> image fragments back to original image in <b>O(N<sup>2</sup>)</b> time complexity</br>
 ![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver.gif)</br>
-<i>Disclaimer: successful reconstruction is not guaranteed</i>
+<i>Disclaimer: orientation of the resulting image is random. Successful reconstruction is not guaranteed.</i>
 
 ### Features
   - distance-matrix computation with <b>parallel processing</b><br>
@@ -12,7 +12,7 @@
 ### Dependencies
 python 3.9.1<br>
 numpy 1.20.2<br>
-opencv-python 4.5.1.48
+opencv-python 4.1.2.30
 
 ## Execution guide
 ### Quick demo with animation

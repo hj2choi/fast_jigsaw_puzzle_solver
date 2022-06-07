@@ -3,31 +3,30 @@ import numpy as np
 
 MAX_PIECES_WINDOW_SIZE = (300, 400)  # height, width
 MAX_MERGE_ANIMATION_WINDOW_SIZE = (600, 1080)  # height, width
-merged_id_list = []
 
 
-def start_assemble_animation(merge_history, img_cells_unaligned, img_cells, interval_millis=200):
+def start_assembly_animation(merge_history, img_cells_unaligned, img_cells, interval_millis=200):
     """
         animation routine.
     """
+    merged_id_list = []
 
     if len(merge_history) < 1:
         return
 
     height, width = merge_history[-1]["cellblock"].size()
     for i in range(len(merge_history)):
-        _display_from_cellblock(merge_history[i], img_cells_unaligned, img_cells, height, width,
+        _display_assembly_state(merge_history[i], merged_id_list, img_cells_unaligned, img_cells, height, width,
                                 str(i + 1) + "/" + str(len(merge_history)), True, interval_millis)
-    _display_from_cellblock(merge_history[-1], img_cells_unaligned, img_cells, height, width,
+    _display_assembly_state(merge_history[-1], merged_id_list, img_cells_unaligned, img_cells, height, width,
                             str(len(merge_history)) + "/" + str(len(merge_history)), False, interval_millis * 4)
+    cv2.destroyAllWindows()
 
 
-def _display_remaining_pieces(img_cells_unaligned, height, width, merge_id):
+def _display_remaining_pieces(img_cells_unaligned, merged_id_list, height, width, merge_id):
     """
         show remaining image fragments
     """
-
-    global merged_id_list
     merged_id_list.append(merge_id)
 
     max_h = MAX_PIECES_WINDOW_SIZE[0]
@@ -60,16 +59,15 @@ def _display_remaining_pieces(img_cells_unaligned, height, width, merge_id):
                 x_offset += mid_align_offset
             whiteboard[y_offset:y_offset + cell_h, x_offset:x_offset + cell_w] = paste
     whiteboard = cv2.resize(whiteboard, (int(window_w * scale), int(window_h * scale)))
-    cv2.imshow("remaining fragments", whiteboard)
+    cv2.imshow("image fragments", whiteboard)
 
 
-def _display_from_cellblock(merge, img_cells_unaligned, img_cells, height, width, text="", draw_borders=True,
-                            interval_millis=200):
+def _display_assembly_state(merge, merged_id_list, img_cells_unaligned, img_cells,
+                                           height, width, text="", draw_borders=True,
+                                           interval_millis=200):
     """
         construct image from cellblock and visualize
     """
-
-    global merged_id_list
     cellblock = merge["cellblock"]._data
     celldata = merge["celldata"]
     rt, ct, rs, cs = merge["cellblock"]._ht, merge["cellblock"]._wt, merge["cellblock"]._hs, merge["cellblock"]._ws
@@ -118,8 +116,8 @@ def _display_from_cellblock(merge, img_cells_unaligned, img_cells, height, width
                              text + " similarity score =" + str(celldata.score), (30, len(whiteboard) - 50),
                              fontFace=cv2.LINE_AA, fontScale=0.5, color=(255, 255, 255))
     try:
-        _display_remaining_pieces(img_cells_unaligned, height, width, celldata.id)
+        _display_remaining_pieces(img_cells_unaligned, merged_id_list, height, width, celldata.id)
     except Exception as e:
         pass
-    cv2.imshow("merge process", whiteboard)
+    cv2.imshow("jigsaw puzzle solver", whiteboard)
     cv2.waitKey(interval_millis)

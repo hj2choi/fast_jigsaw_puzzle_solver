@@ -29,7 +29,7 @@ class ImageAssembler:
         from jigsaw_puzzle_solver.assembler import imageAssembler
         assembler = ImageAssembler.load_from_filepath(directory, prefix, max_cols, max_rows)
         assembler.assemble()
-        assembler.start_assemble_animation()
+        assembler.start_assembly_animation()
         assembler.save_assembled_image()
 
     Attributes:
@@ -43,7 +43,7 @@ class ImageAssembler:
         assemble() -> void
         save_assembled_image() -> void
         save_assembled_image(filepath: str) -> void
-        start_assemble_animation(interval_millis: int) -> void
+        start_assembly_animation(interval_millis: int) -> void
     """
 
     def __init__(self, data=([], []), max_cols=0, max_rows=0):
@@ -176,8 +176,8 @@ class ImageAssembler:
                     whiteboard[y_offset: y_offset + cell_h, x_offset: x_offset + cell_w] = paste
         cv2.imwrite(filepath + ".png", whiteboard)
 
-    def start_assemble_animation(self, interval_millis=100):
-        vis.start_assemble_animation(self.merge_history, self.raw_imgs_unaligned,
+    def start_assembly_animation(self, interval_millis=100):
+        vis.start_assembly_animation(self.merge_history, self.raw_imgs_unaligned,
                                      self.raw_imgs, interval_millis)
 
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

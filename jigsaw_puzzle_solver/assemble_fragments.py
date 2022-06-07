@@ -38,7 +38,7 @@ def main(args, cfg):
     sys.stdout = sys.__stdout__  # restore stdout
     print("total elapsed time:", time.time() - s_time, "seconds", flush=True)
     if enable_visualization:
-        assembler.start_assemble_animation(animation_interval)
+        assembler.start_assembly_animation(animation_interval)
 
 
 if __name__ == '__main__':
