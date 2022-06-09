@@ -6,7 +6,6 @@ import os
 import time
 import copy
 from multiprocessing import Pool
-
 import cv2
 import numpy as np
 
@@ -212,7 +211,7 @@ class ImageAssembler:
                 if i > j:
                     for k in range(t_cnt * 4):
                         self.sim_matrix[i][j][k] = self.sim_matrix[j][i][self.mat_sym_dmapper(k)]
-        print("preprocessing:", time.time() - s_time, "seconds")
+        print("similarity matrix construction:", time.time() - s_time, "seconds")
 
     def _construct_similarity_matrix_parallel(self, raw_imgs_norm, t_cnt):
         """
@@ -224,12 +223,11 @@ class ImageAssembler:
             return False
         try:
             s_time = time.time()
-            with Pool(MAX_PROCESS_COUNT, self._init_process, (np.array(raw_imgs_norm), t_cnt)) as pool:
+            with Pool(MAX_PROCESS_COUNT, self._init_process, (raw_imgs_norm, t_cnt)) as pool:
                 print("child process creation overhead:", time.time() - s_time, "seconds")
-                s_time = time.time()
                 self.sim_matrix = np.reshape(pool.map(self._compute_elementwise_similarity,
-                                                      np.ndenumerate(np.copy(self.sim_matrix))),
-                                             (len(self.raw_imgs), len(self.raw_imgs), t_cnt * 4))
+                                                      np.ndenumerate(self.sim_matrix)),
+                                                      (len(self.raw_imgs), len(self.raw_imgs), t_cnt * 4))
             return True
         except Exception as e:
             print("Failed to start process")
@@ -244,8 +242,9 @@ class ImageAssembler:
 
     @staticmethod
     def _compute_elementwise_similarity(x):
+        global raw_images_norm_g, t_cnt
         i, j, k = x[0][0], x[0][1], x[0][2]
-        # only compute for the upper triangular.
+        # only compute for the upper triangular region.
         if i > j:
             return 0
         return helpers.img_borders_similarity(raw_images_norm_g[j][k % t_cnt], raw_images_norm_g[i][0], k // t_cnt)
