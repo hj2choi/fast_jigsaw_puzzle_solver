@@ -31,7 +31,7 @@ fragment_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_pre
 
 #### assemble_fragments.py: re-assemble image fragments back to original image
 ```bash
-assemble_fragments.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [-v]
+assemble_images.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [-v]
 ```
 -v: *output log and show animation*<br/>
 <img src="https://hj2choi.github.io/images/external/merge_image.png" width="300" title="merge image">
