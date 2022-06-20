@@ -27,7 +27,6 @@ DEFAULT_CONFIG = {
     }
 }
 RANDOM_SEED = 32  # for reproducibility
-_FRAGMENTS_UID = 0  # Unique ID for each image fragment files (for unique hash string)
 
 
 def rand_flip_x(img):
@@ -60,29 +59,28 @@ def rand_rotate90(img, clockwise=False):
     return img
 
 
-def process_image_segment(img, file_prefix):
+def process_image_segment(img, file_prefix, sequence_no):
     """
-        randomly transform (x,y flip + rotate) a given image and write to random filename.
-        incremental unique id is used to prevent filenames from clashing
+    randomly transform (x,y flip + rotate) a given image
+    and write to random unique filename starting with {file_prefix}.
 
-        @Parameters
-        img (npArray):              image segment of shape (h, w, RGB)
-        filename_prefix (str):      output filename prefix
+    Args:
+        img (npArray):          image segment of shape (h, w, RGB)
+        file_prefix (str):      output filename prefix
+        sequence_no (int):      sequence number for unique identifier.
     """
-    global _FRAGMENTS_UID
-    randomized_name = hashlib.md5(str.encode(file_prefix + str(_FRAGMENTS_UID))).hexdigest()
-    print("image fragment", randomized_name, end=": ")
+    uuid_filename = hashlib.md5(str.encode(file_prefix + str(sequence_no))).hexdigest()
+    print("image fragment", uuid_filename, end=": ")
     img = rand_rotate90(rand_flip_y(rand_flip_x(img)))
-    cv2.imwrite(file_prefix + "_" + randomized_name + ".png", img)
+    cv2.imwrite(file_prefix + "_" + uuid_filename + ".png", img)
     print("")
-    _FRAGMENTS_UID += 1
 
 
 def main(args, cfg):
     """
-        1. read and slice image into y*x pieces as specified in args
-        2. for each image slice: apply random set of transformations.
-        3. save fragmented images to random filenames.
+    1. read and slice image into y*x pieces as specified in args
+    2. for each image slice: apply random set of transformations.
+    3. save fragmented images to random filenames.
     """
     s_time = time.time()
     random.seed(RANDOM_SEED)  # for reproducibility
@@ -97,7 +95,7 @@ def main(args, cfg):
         return
     print("fragment_image.py: loaded image from", args.image)
 
-    if not verbose or args.rows * args.cols > 12:
+    if not verbose:
         sys.stdout = open(os.devnull, 'w')  # block stdout
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -105,8 +103,10 @@ def main(args, cfg):
     h, w = len(img) // args.rows, len(img[0]) // args.cols  # height and width
     for i in range(args.rows):
         for j in range(args.cols):
-            rs, cs = int(i * h), int(j * w)  # row start, col start
-            process_image_segment(img[rs: rs + h, cs: cs + w], output_dir + "/" + args.out_prefix)
+            top, left = int(i * h), int(j * w)  # row start, col start
+            process_image_segment(img[top: top + h, left: left + w],
+                                  os.path.join(output_dir, args.out_prefix),
+                                  i*args.cols+j)
     sys.stdout = sys.__stdout__  # restore stdout
     print("fragmented image into", args.rows * args.cols, "slices. ")
     print(time.time() - s_time, "seconds elapsed")
@@ -122,10 +122,10 @@ if __name__ == '__main__':
                     help='increase output verbosity')
     AP.add_argument('--config_file', '-c', required=False, default="./config/config.ini",
                     action='store_true', help='configuration ini file')
-    parsed_args = AP.parse_args()
+    PARSED_ARGS = AP.parse_args()
 
     CP = ConfigParser()
     CP.read_dict(DEFAULT_CONFIG)
-    CP.read(parsed_args.config_file)
+    CP.read(PARSED_ARGS.config_file)
 
-    main(parsed_args, CP)
+    main(PARSED_ARGS, CP)

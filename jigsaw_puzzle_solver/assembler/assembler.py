@@ -1,7 +1,11 @@
-"""assemble fragmented image cells
+""" assembler.py
+main jigsaw puzzle solver algorithm.
 
+reads all images with given prefix and attempts to assemble images.
+adapted Prim's Minimum Spanning Tree algorithm.
+
+3D distance matrix is computed in parallel.
 """
-
 import os
 import time
 import copy
@@ -12,12 +16,13 @@ import numpy as np
 from . import assembler_helpers as helpers
 from . import assembler_visualizer as vis
 from .assembler_data_structures import CellData, CellBlock, LHashmapPriorityQueue
-#import jigsaw_puzzle_solver.assembler.assembler_helpers as helpers
-#import jigsaw_puzzle_solver.assembler.assembler_visualizer as vis
-#from jigsaw_puzzle_solver.assembler.assembler_data_structures import CellData, CellBlock, LHashmapPriorityQueue
 
-COMPUTE_PARALLEL_FRAGMENTS_THRESHOLD = 128  # compute similarity matrix in parallel for number of images above threshold
-MAX_PROCESS_COUNT = 3  # the number of CPUs to be used to construct similarity matrix
+
+# determinant for serial or parallel processing of distance matrix computation.
+# set this to big number to turn off parallel processing feature.
+PARALLEL_COMPUTATION_MIN_IMAGES = 128
+# the number of CPUs to be used to construct similarity matrix
+PROCESS_COUNT = 3
 
 
 class ImageAssembler:
@@ -36,7 +41,8 @@ class ImageAssembler:
         max_cols (int)
             max_cols, max_rows are interchangeable
         raw_imgs (2d list of cv2 images):
-            collection of image fragments with all possible orientations (4 for square fragments, 8 for rectangle ones)
+            collection of image fragments with all possible orientations
+            (4 for square fragments, 8 for rectangle ones)
 
     Methods:
         assemble() -> void
@@ -50,10 +56,12 @@ class ImageAssembler:
         self.raw_imgs_unaligned = data[0]  # for visualization
         self.raw_imgs = data[1]  # image fragments with all combination of transformations
         self.transforms_cnt = len(self.raw_imgs[0])  # number of possible transformation states
-        self.sim_matrix = np.zeros((len(self.raw_imgs), len(self.raw_imgs), self.transforms_cnt * 4))
-        self.idxmap = helpers.map4 if self.transforms_cnt == 4 else helpers.map8  # similarity matrix index mapper
+        self.sim_matrix = np.zeros((len(self.raw_imgs), len(self.raw_imgs),
+                                    self.transforms_cnt * 4))
+        self.idx_map = helpers.map4 if self.transforms_cnt == 4 else helpers.map8
         # similarity matrix depth mapper for filling out symmetric parts
-        self.mat_sym_dmapper = helpers.mat_sym_dmap16 if self.transforms_cnt == 4 else helpers.mat_sym_dmap32
+        self.mat_sym_dmapper = helpers.mat_sym_dmap16 if self.transforms_cnt == 4 \
+            else helpers.mat_sym_dmap32
         self.merge_history = []  # merge history from first merge to last
 
     @classmethod
@@ -64,7 +72,7 @@ class ImageAssembler:
             directory (str): directory storing fragmented images
             prefix (str): prefix of fragmented image filenames (should be set fragment_images.py)
             max_cols (int): columns constraint for image assembly
-            max_rows (int): rows constraint for image assembly (max_cols, max_rows are interchangeable)
+            max_rows (int): rows constraint for image assembly (max_cols, max_rows interchangeable)
         """
 
         raw_images = []
@@ -94,43 +102,53 @@ class ImageAssembler:
     def assemble(self):
         """
             assemble fragmented image cells back to original image.
-            Prim's Minimum Spanning Tree algorithm with Linked Hashmap implementation of Priority Queue.
+            Prim's Minimum Spanning Tree algorithm with
+            Linked Hashmap implementation of Priority Queue.
         """
 
         def _best_fit_cell_at(y, x):
-            # from the list of unmerged image cells, find one that can be most naturally stitched at position x, y
+            """
+            From the list of unmerged image cells, find one that can be
+            most naturally stitched at position x, y
+            """
             nonlocal cellblock, unused_ids
-            t_cnt = self.transforms_cnt
             best_celldata = CellData()
-            for id in unused_ids:  # for all remaining images
+            for img_id in unused_ids:  # for all remaining images
                 for adj in cellblock.active_neighbors(y, x):  # for all adjacent images
-                    for k in range(t_cnt * adj.dir, t_cnt * adj.dir + t_cnt):  # for all transformations
-                        score = self.sim_matrix[adj.id][id][self.idxmap(adj.transform, k)]
+                    for k in range(self.transforms_cnt * adj.dir,  # for all transformations
+                                   self.transforms_cnt * adj.dir + self.transforms_cnt):
+                        score = self.sim_matrix[adj.img_id][img_id][self.idx_map(adj.transform, k)]
                         if best_celldata.score < score or not best_celldata.is_valid():
-                            best_celldata.set(id, k % t_cnt, score, y, x, adj.dir)
+                            best_celldata.set(img_id, k % self.transforms_cnt, score, y, x, adj.dir)
             return best_celldata
 
         def _dequeue_and_merge():
-            # dequeue image cell from the priority queue and place it on the cellblock.
-            # Then, remove all duplicate image cells from the priority queue.
+            """
+            Dequeue image cell from the priority queue and place it on the cellblock.
+            Then, remove all duplicate image cells from the priority queue.
+            """
             nonlocal p_queue, cellblock, unused_ids
             cdata, duplicates = p_queue.dequeue_and_remove_duplicate_ids()
             cellblock.activate_cell(cdata)
-            unused_ids.remove(cdata.id)
+            unused_ids.remove(cdata.img_id)
             print("image merged: ", cdata.tostring(), "\t",
                   len(self.raw_imgs) - len(unused_ids), "/", len(self.raw_imgs), flush=True)
-            self.merge_history.append({"cellblock": copy.deepcopy(cellblock), "celldata": copy.deepcopy(cdata)})
+            self.merge_history.append({"cellblock": copy.deepcopy(cellblock),
+                                       "celldata": copy.deepcopy(cdata)})
             # print("current-cellblock:\n", cellblock.data)
             return cdata, duplicates
 
         def _enqueue_all_frontiers(frontier_cells_list):
-            # for all next possible image cell placement positions, find best fit cell and append to the priority queue.
+            """
+            for all next possible image cell placement positions,
+            find best fit cell and append to the priority queue.
+            """
             nonlocal p_queue, cellblock
             for frontier in frontier_cells_list:
                 if cellblock.validate_pos(*frontier.pos()):
                     cdata = _best_fit_cell_at(*frontier.pos())
                     if cdata.is_valid():
-                        p_queue.enqueue(cdata.id, cdata)
+                        p_queue.enqueue(cdata.img_id, cdata)
 
         # initialization.
         self._construct_similarity_matrix()
@@ -139,7 +157,7 @@ class ImageAssembler:
         unused_ids = [*range(0, len(self.raw_imgs))]  # remaining cells
         cellblock = CellBlock(self.max_rows, self.max_cols)  # blueprint for image reconstruction
         p_queue = LHashmapPriorityQueue(len(self.raw_imgs))  # priority queue for MST algorithm
-        p_queue.enqueue(0, CellData(0, 0, 1.0, cellblock._hs, cellblock._ws))  # source node
+        p_queue.enqueue(0, CellData(0, 0, 1.0, cellblock.top, cellblock.left))  # source node
 
         # the main MST assembly algorithm loop
         while not p_queue.is_empty():
@@ -158,24 +176,26 @@ class ImageAssembler:
         """
             save assembled image to file
         """
-
         cellblock = self.merge_history[-1]["cellblock"]
-        rt, ct, rs, cs = cellblock._ht, cellblock._wt, cellblock._hs, cellblock._ws
+        top, bottom, right, left = cellblock.top, cellblock.bottom, cellblock.right, cellblock.left
         cell_h, cell_w = len(self.raw_imgs[0][0]), len(self.raw_imgs[0][0][0])
-        cellblock_h, cellblock_w = (rt - rs + 1) * cell_h, (ct - cs + 1) * cell_w
+        cellblock_h, cellblock_w = (top - bottom + 1) * cell_h, (right - left + 1) * cell_w
 
         whiteboard = np.zeros((cellblock_h, cellblock_w, 3), dtype=np.uint8)
         whiteboard.fill(0)
-        for i in range(cellblock._data_len):
-            for j in range(cellblock._data_len):
-                celldata = cellblock._data[i][j]
+        for i in range(len(cellblock.data)):
+            for j in range(len(cellblock.data)):
+                celldata = cellblock.data[i][j]
                 if celldata.is_valid():
-                    paste = self.raw_imgs[celldata.id][celldata.transform]
-                    y_offset, x_offset = (i - rs) * cell_h, (j - cs) * cell_w
+                    paste = self.raw_imgs[celldata.img_id][celldata.transform]
+                    y_offset, x_offset = (i - bottom) * cell_h, (j - left) * cell_w
                     whiteboard[y_offset: y_offset + cell_h, x_offset: x_offset + cell_w] = paste
         cv2.imwrite(filepath + ".png", whiteboard)
 
-    def start_assembly_animation(self, interval_millis=100):
+    def start_assembly_animation(self, interval_millis=200):
+        """
+            show animation after assembly process is complete.
+        """
         vis.start_assembly_animation(self.merge_history, self.raw_imgs_unaligned,
                                      self.raw_imgs, interval_millis)
 
@@ -190,61 +210,64 @@ class ImageAssembler:
             shape of similarity matrix = (row, col, [16 or 32])
         """
 
-        t_cnt = self.transforms_cnt
         raw_imgs_norm = np.array(self.raw_imgs) / 256  # normalize
 
         s_time = time.time()
         # try parallel preprocessing for large number of images
-        if not self._construct_similarity_matrix_parallel(raw_imgs_norm, t_cnt):
+        if not self._construct_similarity_matrix_parallel(raw_imgs_norm, self.transforms_cnt):
             # serial processing. Only compute for the upper triangular region.
             for i in range(len(self.raw_imgs)):
                 for j in range(len(self.raw_imgs)):
                     if i < j:
-                        for k in range(t_cnt * 4):
+                        for k in range(self.transforms_cnt * 4):
                             self.sim_matrix[i][j][k] = helpers.img_borders_similarity(
-                                raw_imgs_norm[j][k % t_cnt],
-                                raw_imgs_norm[i][0], k // t_cnt)
+                                raw_imgs_norm[j][k % self.transforms_cnt],
+                                raw_imgs_norm[i][0], k // self.transforms_cnt)
 
         # fill up the missing lower triangular region of the similarity matrix.
         for i in range(len(self.raw_imgs)):
             for j in range(len(self.raw_imgs)):
                 if i > j:
-                    for k in range(t_cnt * 4):
+                    for k in range(self.transforms_cnt * 4):
                         self.sim_matrix[i][j][k] = self.sim_matrix[j][i][self.mat_sym_dmapper(k)]
         print("similarity matrix construction:", time.time() - s_time, "seconds")
 
-    def _construct_similarity_matrix_parallel(self, raw_imgs_norm, t_cnt):
+    def _construct_similarity_matrix_parallel(self, raw_imgs_norm, transformations_cnt):
         """
             construct similarity matrix for all image pairs,
             considers all combination of stitching directions and orientations.
             shape of similarity matrix = (row, col, [16 or 32])
         """
-        if len(self.raw_imgs) < COMPUTE_PARALLEL_FRAGMENTS_THRESHOLD * 4 / t_cnt:
+        if len(self.raw_imgs) < PARALLEL_COMPUTATION_MIN_IMAGES * 4 / transformations_cnt:
             return False
         try:
             s_time = time.time()
-            with Pool(MAX_PROCESS_COUNT, self._init_process, (raw_imgs_norm, t_cnt)) as pool:
+            with Pool(PROCESS_COUNT, self._init_process,
+                      (raw_imgs_norm, transformations_cnt)) as pool:
                 print("child process creation overhead:", time.time() - s_time, "seconds")
                 self.sim_matrix = np.reshape(pool.map(self._compute_elementwise_similarity,
                                                       np.ndenumerate(self.sim_matrix)),
-                                                      (len(self.raw_imgs), len(self.raw_imgs), t_cnt * 4))
+                                             (len(self.raw_imgs), len(self.raw_imgs),
+                                              transformations_cnt * 4))
             return True
-        except Exception as e:
+        except Exception as exception:
             print("Failed to start process")
-            print(e)
+            print(exception)
             return False
 
     @staticmethod
     def _init_process(raw_imgs_norm, _t_cnt):
-        global raw_images_norm_g, t_cnt
-        raw_images_norm_g = raw_imgs_norm
-        t_cnt = _t_cnt
+        global RAW_IMGS_NORM, TRANSFORMATIONS_CNT
+        RAW_IMGS_NORM = raw_imgs_norm
+        TRANSFORMATIONS_CNT = _t_cnt
 
     @staticmethod
     def _compute_elementwise_similarity(x):
-        global raw_images_norm_g, t_cnt
+        global RAW_IMGS_NORM, TRANSFORMATIONS_CNT
         i, j, k = x[0][0], x[0][1], x[0][2]
         # only compute for the upper triangular region.
         if i > j:
             return 0
-        return helpers.img_borders_similarity(raw_images_norm_g[j][k % t_cnt], raw_images_norm_g[i][0], k // t_cnt)
+        return helpers.img_borders_similarity(
+            RAW_IMGS_NORM[j][k % TRANSFORMATIONS_CNT],
+            RAW_IMGS_NORM[i][0], k // TRANSFORMATIONS_CNT)

@@ -1,3 +1,9 @@
+""" assembler_visualizer.py
+assembler.py helper routines for visualizing images assembly animation.
+
+note: cv2.imshow() works best when kept in the main thread.
+"""
+
 import cv2
 import numpy as np
 
@@ -7,47 +13,58 @@ MAX_MERGE_ANIMATION_WINDOW_SIZE = (600, 1080)  # height, width
 
 def start_assembly_animation(merge_history, img_cells_unaligned, img_cells, interval_millis=200):
     """
-        animation routine.
+    animation routine.
+
+    Args:
+        merge_history: list of dict, [{cellblock, celldata}]
+        img_cells_unaligned: list of cv2 images
+        img_cells: list of cv2 images
+        interval_millis: int
     """
     merged_id_list = []
 
-    if len(merge_history) < 1:
+    if not merge_history:
         return
 
-    height, width = merge_history[-1]["cellblock"].size()
-    for i in range(len(merge_history)):
-        _display_assembly_state(merge_history[i], merged_id_list, img_cells_unaligned, img_cells, height, width,
-                                str(i + 1) + "/" + str(len(merge_history)), True, interval_millis)
-    _display_assembly_state(merge_history[-1], merged_id_list, img_cells_unaligned, img_cells, height, width,
-                            str(len(merge_history)) + "/" + str(len(merge_history)), False, interval_millis * 4)
+    rows, cols = merge_history[-1]["cellblock"].block_size()
+    for i, _ in enumerate(merge_history):
+        _display_current_assembly_progress(merge_history[i], merged_id_list, img_cells_unaligned,
+                                           img_cells, rows, cols,
+                                           str(i + 1) + "/" + str(len(merge_history)),
+                                           True, interval_millis)
+    _display_current_assembly_progress(merge_history[-1], merged_id_list, img_cells_unaligned,
+                                       img_cells, rows, cols,
+                                       str(len(merge_history)) + "/" + str(len(merge_history)),
+                                       False, interval_millis * 4)
     cv2.destroyAllWindows()
 
 
-def _display_remaining_pieces(img_cells_unaligned, merged_id_list, height, width, merge_id):
+def _display_remaining_pieces(img_cells_unaligned, merged_id_list, rows, cols, merge_id):
     """
-        show remaining image fragments
+    Private method, shows remaining image fragments.
     """
     merged_id_list.append(merge_id)
 
     max_h = MAX_PIECES_WINDOW_SIZE[0]
     max_w = MAX_PIECES_WINDOW_SIZE[1]
     max_cell_len = max(len(img_cells_unaligned[0][0]), len(img_cells_unaligned[0][0][0]))
-    mid_align_offset = (max_cell_len - min(len(img_cells_unaligned[0][0]), len(img_cells_unaligned[0][0][0]))) // 2
-    window_h = int((height * max_cell_len) * 1.15)
-    window_w = int((width * max_cell_len) * 1.15)
+    mid_align_offset = (max_cell_len -
+                        min(len(img_cells_unaligned[0][0]), len(img_cells_unaligned[0][0][0]))) // 2
+    window_h = int((rows * max_cell_len) * 1.15)
+    window_w = int((cols * max_cell_len) * 1.15)
     start_h = 20
     start_w = 20
     scale = min(max_h / window_h, max_w / window_w)
 
     whiteboard = np.zeros((window_h, window_w, 3), dtype=np.uint8)
     whiteboard.fill(255)
-    for i in range(len(img_cells_unaligned)):
+    for i, _ in enumerate(img_cells_unaligned):
         placeholder = np.full((max_cell_len, max_cell_len, 3), 245)
         paste = img_cells_unaligned[i][0]
         cell_h = len(paste)
         cell_w = len(paste[0])
-        y_offset = start_h + (i // width) * int(max_cell_len * 1.1)
-        x_offset = start_w + (i % width) * int(max_cell_len * 1.1)
+        y_offset = start_h + (i // cols) * int(max_cell_len * 1.1)
+        x_offset = start_w + (i % cols) * int(max_cell_len * 1.1)
         whiteboard[y_offset:y_offset + max_cell_len, x_offset:x_offset + max_cell_len] = placeholder
         for j in merged_id_list:
             if j == i:
@@ -62,24 +79,25 @@ def _display_remaining_pieces(img_cells_unaligned, merged_id_list, height, width
     cv2.imshow("image fragments", whiteboard)
 
 
-def _display_assembly_state(merge, merged_id_list, img_cells_unaligned, img_cells,
-                                           height, width, text="", draw_borders=True,
-                                           interval_millis=200):
+def _display_current_assembly_progress(merge, merged_id_list, img_cells_unaligned, img_cells,
+                                       rows, cols, text="", draw_borders=True,
+                                       interval_millis=200):
     """
-        construct image from cellblock and visualize
+    Private method, shows remaining image fragments.
     """
-    cellblock = merge["cellblock"]._data
+    cellblock = merge["cellblock"].data
     celldata = merge["celldata"]
-    rt, ct, rs, cs = merge["cellblock"]._ht, merge["cellblock"]._wt, merge["cellblock"]._hs, merge["cellblock"]._ws
+    bottom, right, top, left = merge["cellblock"].top, merge["cellblock"].right, \
+                               merge["cellblock"].bottom, merge["cellblock"].left
 
     max_h = MAX_MERGE_ANIMATION_WINDOW_SIZE[0]
     max_w = MAX_MERGE_ANIMATION_WINDOW_SIZE[1]
     cell_h = len(img_cells[0][0])
     cell_w = len(img_cells[0][0][0])
-    window_h = height * cell_h + int(cell_h * 1.0)
-    window_w = width * cell_w + int(cell_w * 1.0)
-    cellblock_h = (rt - rs + 1) * cell_h
-    cellblock_w = (ct - cs + 1) * cell_w
+    window_h = rows * cell_h + int(cell_h * 1.0)
+    window_w = cols * cell_w + int(cell_w * 1.0)
+    cellblock_h = (bottom - top + 1) * cell_h
+    cellblock_w = (right - left + 1) * cell_w
     start_h = (window_h - cellblock_h) // 2
     start_w = (window_w - cellblock_w) // 2
     scale = min(max_h / window_h, max_w / window_w)
@@ -88,36 +106,41 @@ def _display_assembly_state(merge, merged_id_list, img_cells_unaligned, img_cell
     whiteboard.fill(255)
 
     # assemble image as specifed in cellblock blueprint
-    for i in range(len(cellblock)):
-        for j in range(len(cellblock[0])):
+    for i, _ in enumerate(cellblock):
+        for j, _ in enumerate(cellblock[0]):
             if cellblock[i][j].is_valid():
                 cdata = cellblock[i][j]
-                paste = img_cells[cdata.id][cdata.transform]
-                y_offset = start_h + (i - rs) * cell_h
-                x_offset = start_w + (j - cs) * cell_w
+                paste = img_cells[cdata.img_id][cdata.transform]
+                y_offset = start_h + (i - top) * cell_h
+                x_offset = start_w + (j - left) * cell_w
                 whiteboard[y_offset:y_offset + cell_h, x_offset:x_offset + cell_w] = paste
-                if draw_borders and cellblock[i][j].id == celldata.id:
+                if draw_borders and cellblock[i][j].img_id == celldata.img_id:
                     if celldata.dir == 0:
                         cv2.line(whiteboard, (x_offset, y_offset + cell_h),
-                                 (x_offset + cell_w, y_offset + cell_h), (0, 0, 255), int(2 / scale))
+                                 (x_offset + cell_w, y_offset + cell_h),
+                                 (0, 0, 255), int(2 / scale))
                     elif celldata.dir == 1:
                         cv2.line(whiteboard, (x_offset, y_offset),
-                                 (x_offset + cell_w, y_offset), (0, 0, 255), int(2 / scale))
+                                 (x_offset + cell_w, y_offset),
+                                 (0, 0, 255), int(2 / scale))
                     elif celldata.dir == 2:
                         cv2.line(whiteboard, (x_offset + cell_w, y_offset),
-                                 (x_offset + cell_w, y_offset + cell_h), (0, 0, 255), int(2 / scale))
+                                 (x_offset + cell_w, y_offset + cell_h),
+                                 (0, 0, 255), int(2 / scale))
                     elif celldata.dir == 3:
                         cv2.line(whiteboard, (x_offset, y_offset),
-                                 (x_offset, y_offset + cell_h), (0, 0, 255), int(2 / scale))
+                                 (x_offset, y_offset + cell_h),
+                                 (0, 0, 255), int(2 / scale))
 
     whiteboard = cv2.resize(whiteboard, (int(window_w * scale), int(window_h * scale)))
     whiteboard = cv2.copyMakeBorder(whiteboard, 0, 100, 0, 0, cv2.BORDER_CONSTANT)
     whiteboard = cv2.putText(whiteboard,
-                             text + " similarity score =" + str(celldata.score), (30, len(whiteboard) - 50),
+                             text + " similarity score =" +
+                             str(celldata.score), (30, len(whiteboard) - 50),
                              fontFace=cv2.LINE_AA, fontScale=0.5, color=(255, 255, 255))
     try:
-        _display_remaining_pieces(img_cells_unaligned, merged_id_list, height, width, celldata.id)
-    except Exception as e:
+        _display_remaining_pieces(img_cells_unaligned, merged_id_list, rows, cols, celldata.img_id)
+    except ValueError:
         pass
     cv2.imshow("jigsaw puzzle solver", whiteboard)
     cv2.waitKey(interval_millis)

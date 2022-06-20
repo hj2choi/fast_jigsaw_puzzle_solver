@@ -28,6 +28,9 @@ DEFAULT_CONFIG = {
 
 
 def main(args, cfg):
+    """
+    main jigsaw puzzle solver routine
+    """
     s_time = time.time()
     images_dir = cfg.get("config", "fragments_dir")
     output_directory = cfg.get("config", "output_dir")
@@ -59,7 +62,6 @@ def main(args, cfg):
 
 
 if __name__ == '__main__':
-
     AP = ArgumentParser()
     AP.add_argument('in_prefix', type=str, help='prefix to image fragments')
     AP.add_argument('cols', type=int, help='Number of column slices')
@@ -71,10 +73,10 @@ if __name__ == '__main__':
                     help='show image reconstruction animation')
     AP.add_argument('--config_file', '-c', required=False, default="./config/config.ini",
                     action='store_true', help='configuration ini file')
-    parsed_args = AP.parse_args()
+    PARSED_ARGS = AP.parse_args()
 
     CP = ConfigParser()
     CP.read_dict(DEFAULT_CONFIG)
-    CP.read(parsed_args.config_file)
+    CP.read(PARSED_ARGS.config_file)
 
-    main(parsed_args, CP)
+    main(PARSED_ARGS, CP)

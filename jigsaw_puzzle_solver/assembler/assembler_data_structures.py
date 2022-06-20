@@ -1,8 +1,16 @@
-import numpy as np
+"""assembler_data_structures.py
+helper data structures for assembler.py
+
+CellData: representation of image cell including id, orientation and x,y position
+CellBlock: blueprint for image assembly.
+LHashmapPriorityQueue: linked-hashmap implementation of MST priority queue.
+"""
+
 import copy
+import numpy as np
 
 # direction ENUM (id, y delta, x delta)
-DIR = {
+DIR_ENUM = {
     'd': (0, 1, 0),
     'u': (1, -1, 0),
     'r': (2, 0, 1),
@@ -15,8 +23,9 @@ class CellData:
     Representation of image cell (fragment). id, orientation state, position
 
     Attributes:
-        id (int): image cell id
-        transform (int): orientation state (flip, rotate) [0~3] for square cells, [0~7] for rectangular ones.
+        img_id (int): image cell id
+        transform (int): orientation state (flip, rotate) [0~3] for square cells,
+                         [0~7] for rectangular ones.
         score (float): similarity score of which cell was stitched
         x (int): cell's x position inside the CellBlock
         y (int): cell's y position inside the CellBlock
@@ -34,43 +43,57 @@ class CellData:
 
     """
 
-    def __init__(self, id=-1, transform=-1, score=-float("inf"), y=-1, x=-1, dir=-1):
-        self.id = id  # unique id
-        # transform: 0~3 for rectangular images (x_flip*y_flip), 0~7 for square images (rotation90*x_flip*y_flip)
+    def __init__(self, img_id=-1, transform=-1, score=-float("inf"), y=-1, x=-1, direction=-1):
+        self.img_id = img_id  # unique id
+        # transform: 0~3 for rectangular images (x_flip*y_flip),
+        # 0~7 for square images (rotation90*x_flip*y_flip)
         self.transform = transform
         self.score = score  # similarity score at which cell was stitched
         self.y, self.x = y, x  # cell's position inside the cellblock
-        self.dir = dir  # stitching direction, 0~3 ('d','u','r','l')
+        self.dir = direction  # stitching direction, 0~3 ('d','u','r','l')
 
     def __str__(self):
-        return str(self.id) if self.is_valid() else "-"
+        return str(self.img_id) if self.is_valid() else "-"
 
     def __repr__(self):
         return self.__str__()
 
     def tostring(self):
-        return ("{id: " + str(self.id) + ", t: " + str(self.transform) +
+        """
+        represent full instance state in string.
+        """
+        return ("{id: " + str(self.img_id) + ", t: " + str(self.transform) +
                 ", (" + str(self.y) + ", " + str(self.x) + "), dir:" + str(self.dir) +
                 ", score: " + format(self.score, ".4f") + " }")
 
-    def set(self, id=-1, transform=-1, score=-float("inf"), y=-1, x=-1, dir=-1):
-        # set selected attributes.
-        if id != -1:
-            self.id = id
+    def set(self, img_id=-1, transform=-1, score=-float("inf"), y=-1, x=-1, direction=-1):
+        """
+        set selected attributes.
+        """
+        if img_id != -1:
+            self.img_id = img_id
         if transform != -1:
             self.transform = transform
         if score > -float("inf"):
             self.score = score
         if y != -1 and x != -1:
             self.y, self.x = y, x
-        if dir != -1:
-            self.dir = dir
+        if direction != -1:
+            self.dir = direction
         return self
 
     def is_valid(self):
-        return self.id >= 0
+        """
+        returns True if this Cell represents image,
+        False if it only acts as a placeholder.
+        (to be used within CellBlock)
+        """
+        return self.img_id >= 0
 
     def pos(self):
+        """
+        position of the cell within CellBlock
+        """
         return self.y, self.x
 
     def __lt__(self, other):
@@ -102,43 +125,47 @@ class CellBlock:
 
     """
 
-    def __init__(self, max_h, max_w, data=None, hs=-1, ht=-1, ws=-1, wt=-1, init=True):
-        self._init = init  # true if no cell has been activated yet
+    def __init__(self, max_h, max_w):
+        self._init = True
         self.max_h, self.max_w = max_h, max_w  # max allowed height and width
-        self._data_len = max(max_h, max_w) * 2  # allocated width & height of data (2d list of CellData)
-        self._data = data  # 2D array of celldata, blueprint for image reconstruction
-        self._hs, self._ht = hs, ht  # h start - end
-        self._ws, self._wt = ws, wt  # w start - end
-        if self._init:
-            self._data = np.array([[CellData(y=i, x=j) for j in range(self._data_len)] for i in range(self._data_len)])
-            half_length = max(max_h, max_w)
-            self._hs = self._ht = self._ws = self._wt = half_length
+        w_h_size = max(max_h, max_w) * 2  # allocated width & height of data (2d list of CellData)
+        # 2D array of celldata, blueprint for image reconstruction
+        self.data = np.array([[CellData(y=i, x=j) for j in range(w_h_size)]
+                              for i in range(w_h_size)])
+        self.bottom = self.top = self.left = self.right = max(max_h, max_w)
 
     def active_neighbors(self, y, x):
+        """
+        returns all neighboring active Cells
+        """
         adj = []
-        for d in DIR.values():
-            if (0 < y + d[1] < self._data_len and 0 < x + d[2] < self._data_len
-                    and self._data[y + d[1]][x + d[2]].is_valid()):
-                adj.append(copy.deepcopy(self._data[y + d[1]][x + d[2]]).set(dir=d[0]))
+        for dirc in DIR_ENUM.values():
+            if (0 < y + dirc[1] < len(self.data) and 0 < x + dirc[2] < len(self.data)
+                    and self.data[y + dirc[1]][x + dirc[2]].is_valid()):
+                adj.append(copy.deepcopy(self.data[y + dirc[1]][x + dirc[2]]).set(direction=dirc[0]))
         return adj
 
     def inactive_neighbors(self, y, x):
+        """
+        returns all neighboring inactive Cells
+        """
         adj = []
-        for d in DIR.values():
-            if (0 < y + d[1] < self._data_len and 0 < x + d[2] < self._data_len
-                    and not self._data[y + d[1]][x + d[2]].is_valid()):
-                if self.validate_pos(y + d[1], x + d[2]): adj.append(self._data[y + d[1]][x + d[2]])
+        for dirc in DIR_ENUM.values():
+            if (0 < y + dirc[1] < len(self.data) and 0 < x + dirc[2] < len(self.data)
+                    and not self.data[y + dirc[1]][x + dirc[2]].is_valid()):
+                if self.validate_pos(y + dirc[1], x + dirc[2]):
+                    adj.append(self.data[y + dirc[1]][x + dirc[2]])
         return adj
 
     def validate_pos(self, y, x):
         """
-            check if cell can be activated at position y, x
+        check if cell can be activated at position y, x
         """
-        if (not self._data[y][x].is_valid() and 0 < len(self.active_neighbors(y, x))) or self._init:
-            updated_h, updated_w = self._ht - self._hs, self._wt - self._ws
-            if y < self._hs or self._ht < y:
+        if (not self.data[y][x].is_valid() and self.active_neighbors(y, x)) or self._init:
+            updated_h, updated_w = self.top - self.bottom, self.right - self.left
+            if y < self.bottom or self.top < y:
                 updated_h += 1
-            if x < self._ws or self._wt < x:
+            if x < self.left or self.right < x:
                 updated_w += 1
             return ((updated_h < self.max_h and updated_w < self.max_w) or
                     (updated_h < self.max_w and updated_w < self.max_h))
@@ -146,26 +173,29 @@ class CellBlock:
 
     def activate_cell(self, celldata):
         """
-            activate cell at y, x
-            NOTE: initial cell MUST be activated at y, x = max(max_h, max_w)
+        activate cell at y, x
+        NOTE: initial cell MUST be activated at y, x = max(max_h, max_w)
 
-            @Parameters
-            celldata (list):    [id, transform, score]
+        @Parameters
+        celldata (list):    [id, transform, score]
         """
 
         self._init = False
-        self._data[celldata.y][celldata.x] = celldata
-        if celldata.y > self._ht:
-            self._ht += 1
-        if celldata.y < self._hs:
-            self._hs -= 1
-        if celldata.x > self._wt:
-            self._wt += 1
-        if celldata.x < self._ws:
-            self._ws -= 1
+        self.data[celldata.y][celldata.x] = celldata
+        if celldata.y > self.top:
+            self.top += 1
+        if celldata.y < self.bottom:
+            self.bottom -= 1
+        if celldata.x > self.right:
+            self.right += 1
+        if celldata.x < self.left:
+            self.left -= 1
 
-    def size(self):
-        return self._ht - self._hs + 1, self._wt - self._ws + 1
+    def block_size(self):
+        """
+        returns current cellblock size of activated cells.
+        """
+        return self.top - self.bottom + 1, self.right - self.left + 1
 
 
 class LHashmapPriorityQueue:
@@ -219,12 +249,25 @@ class LHashmapPriorityQueue:
         self.ll_head = None  # linked list head
 
     def is_empty(self):
+        """
+        Returns:
+            empty (bool)
+        """
         return self.ll_head is None
 
     def peek(self):
+        """
+        Returns:
+            val (Object)
+        """
         return self.ll_head.val
 
     def enqueue(self, key, val):
+        """
+        Args:
+            key (int):
+            val (Object):
+        """
         node = self.Node(key, val)
         self.hashmap[node.key].append(node)
 
@@ -237,17 +280,17 @@ class LHashmapPriorityQueue:
             node.next.prev = node
             return
 
-        p = self.ll_head
-        while p.next is not None:
-            if node.val > p.next.val:
-                node.next = p.next
-                node.prev = p
-                p.next = node
+        ptr = self.ll_head
+        while ptr.next is not None:
+            if node.val > ptr.next.val:
+                node.next = ptr.next
+                node.prev = ptr
+                ptr.next = node
                 node.next.prev = node
                 return
-            p = p.next
-        p.next = node
-        node.prev = p
+            ptr = ptr.next
+        ptr.next = node
+        node.prev = ptr
 
     def dequeue(self):
         """

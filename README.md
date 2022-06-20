@@ -5,14 +5,14 @@
 <i>Disclaimer: orientation of the resulting image is random. Successful reconstruction is not guaranteed.</i>
 
 ### Features
-  - distance-matrix computation with <b>parallel processing</b><br>
-  - Prim's <b>Minimum Spanning Tree</b> algorithm with <b>Linked-Hashmap</b> implementation of Priority Queue<br>
+  - <b>Parallel</b> distance matrix computation (plain euclidean distance metric)<br>
+  - Prim's <b>Minimum Spanning Tree</b> algorithm with Linked-Hashmap implementation of Priority Queue<br>
 
 
 ### Dependencies
-python 3.9.1<br>
-numpy 1.20.2<br>
-opencv-python 4.1.2.30
+python 3.7~<br>
+numpy 1.16~<br>
+opencv-python 4.1.2~
 
 ## Execution guide
 ### Quick demo with animation
@@ -23,17 +23,18 @@ bash demo.sh
 
 #### fragment_image.py: slice and randomly transform image
 ```bash
-fragment_image.py ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix} [-v]
+fragment_image.py [-v] ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix}
 ```
--v: *output log*</br>
+-v: *increase verbosity*</br>
 <img src="https://hj2choi.github.io/images/external/cut_image.png" width="300" title="fragment image">
 </br>
 
 #### assemble_fragments.py: re-assemble image fragments back to original image
 ```bash
-assemble_images.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [-v]
+assemble_images.py [-v] [-a] ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [-v]
 ```
--v: *output log and show animation*<br/>
+-v: *increase verbosity*<br/>
+-a: *show animation*<br/>
 <img src="https://hj2choi.github.io/images/external/merge_image.png" width="300" title="merge image">
 
 ## config.ini
@@ -42,7 +43,7 @@ assemble_images.py ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filen
 | `fragments_dir` | directory to save fragmented images | image_fragments/ |
 | `output_dir` | directory to save final merged image | images_out/ |
 | `debug` | enable console log | False |
-| `enable_visualization` | show assembly animation after the process is complete | False |
+| `show_assembly_animation` | show assembly animation after the process is complete | False |
 | `animation_interval_millis` | milliseconds interval between each merge step in animation | 100 |
 
 ## image assembly algorithm (modified Prim's Minimum Spanning Tree)
@@ -76,8 +77,8 @@ in all cases, <b>C = O(N)</b></br>
 | <i>similarity matrix</i>      | <i>O(256N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i><b>O(16N<sup>2</sup>)</b></i> |
 | traverse all images           | O(N) | O(N) | O(N) | O(N) |
 | traverse all positions        | O(4N) | O(4N) | - | - |
-| argmax(img at pos(x,y))       | O(256N) | <b>O(32N)</b> | O(32N) | O(32N) |
-| validate cellblock shape      | O(4N) | <b>O(1)</b> | O(1) | O(1) |
+| argmax(img at pos(x,y))       | O(256N) | O(32N)< | O(32N) | O(32N) |
+| validate cellblock shape      | O(4N) | O(1) | O(1) | O(1) |
 | <i>(PQueue)</i> remove by ID  | - | O(C) | O(ClogN) | <b>O(C)</b> |
 | <i>(PQueue)</i> extract_min() | - | - | O(logN) | <b>O(1)</b> |
 | <i>(PQueue)</i> enqueue       | - | - | <b>O(logN)</b> | O(N) |
