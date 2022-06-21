@@ -1,7 +1,7 @@
 # Fast Jigsaw Puzzle Solver with unknown orientation
 - Fragments image into <b>N</b> (row x col) slices of random orientations</br>
 - Re-assemble <b>N</b> image fragments back to original image in <b>O(N<sup>2</sup>)</b> time complexity</br>
-![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver.gif)</br>
+![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver_2.gif)</br>
 <i>Disclaimer: orientation of the resulting image is random. Successful reconstruction is not guaranteed.</i>
 
 ### Features
