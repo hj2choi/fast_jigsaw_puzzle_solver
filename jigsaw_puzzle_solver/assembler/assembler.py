@@ -192,12 +192,12 @@ class ImageAssembler:
                     whiteboard[y_offset: y_offset + cell_h, x_offset: x_offset + cell_w] = paste
         cv2.imwrite(filepath + ".png", whiteboard)
 
-    def start_assembly_animation(self, interval_millis=200):
+    def start_assembly_animation(self, show_spanning_tree=False, interval_millis=200):
         """
             show animation after assembly process is complete.
         """
         vis.start_assembly_animation(self.merge_history, self.raw_imgs_unaligned,
-                                     self.raw_imgs, interval_millis)
+                                     self.raw_imgs, show_spanning_tree, interval_millis)
 
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         private methods
