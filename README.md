@@ -10,9 +10,9 @@
 
 
 ### Dependencies
-python 3.7~<br>
-numpy 1.16~<br>
-opencv-python 4.1.2~
+python 3.7<br>
+numpy 1.16<br>
+opencv-python 4.1.2
 
 ## Execution guide
 ### Quick demo with animation
@@ -23,7 +23,7 @@ bash demo.sh
 
 #### fragment_image.py: slice and randomly transform image
 ```bash
-fragment_image.py [-v] ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix}
+fragment_image.py [OPTION] ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix}
 ```
 -v: *increase verbosity*</br>
 <img src="https://hj2choi.github.io/images/external/cut_image.png" width="300" title="fragment image">
@@ -31,22 +31,22 @@ fragment_image.py [-v] ${image_file_name} ${x_slice} ${y_slice} ${output_filenam
 
 #### assemble_fragments.py: re-assemble image fragments back to original image
 ```bash
-assemble_images.py [-v] [-a] ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename} [-v]
+assemble_images.py [OPTION] ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
 ```
 -v: *increase verbosity*<br/>
 -a: *show animation*<br/>
 <img src="https://hj2choi.github.io/images/external/merge_image.png" width="300" title="merge image">
 
 ## config.ini
-| Key | Description | Default |
-| :--- | --- | --- |
-| `fragments_dir` | directory to save fragmented images | image_fragments/ |
-| `output_dir` | directory to save final merged image | images_out/ |
-| `debug` | enable console log | False |
-| `show_assembly_animation` | show assembly animation after the process is complete | False |
-| `animation_interval_millis` | milliseconds interval between each merge step in animation | 100 |
+| Key | Description                                                | Default          |
+| :--- |------------------------------------------------------------|------------------|
+| `fragments_dir` | directory to save fragmented images                        | image_fragments/ |
+| `output_dir` | directory to save final merged image                       | images_out/      |
+| `debug` | enable logging                                             | False            |
+| `show_assembly_animation` | show assembly animation after the process is complete      | True             |
+| `animation_interval_millis` | milliseconds interval between each merge step in animation | 200              |
 
-## image assembly algorithm (modified Prim's Minimum Spanning Tree)
+## image assembly algorithm (adapted Prim's Minimum Spanning Tree)
 ```
 I[i,t]: all image fragments (image, transformation)
 S[i,j,t]: all-pairs image similarity-matrix
