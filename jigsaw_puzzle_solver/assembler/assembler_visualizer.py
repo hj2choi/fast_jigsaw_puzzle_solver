@@ -6,6 +6,7 @@ note: cv2.imshow() works best when kept in the main thread.
 
 import cv2
 import numpy as np
+import threading as th
 
 MAX_PIECES_WINDOW_SIZE = (300, 400)  # height, width
 MAX_MERGE_ANIMATION_WINDOW_SIZE = (600, 1080)  # height, width
@@ -17,11 +18,11 @@ def start_assembly_animation(merge_history, img_cells_unaligned, img_cells,
     animation routine.
 
     Args:
-        merge_history: list of dict, [{cellblock, celldata}]
-        img_cells_unaligned: list of cv2 images
-        img_cells: list of cv2 images
-        show_spanning_tree: bool
-        interval_millis: int
+        merge_history (list of dict): [{cellblock, celldata}]
+        img_cells_unaligned (list of cv2 images): unaligned image fragments
+        img_cells (list of cv2 images): aligned image fragments
+        show_spanning_tree (bool): show minimum spanning tree on top of the animation.
+        interval_millis (int): time between each step of the animation
     """
     merged_id_list = []
 
@@ -29,28 +30,33 @@ def start_assembly_animation(merge_history, img_cells_unaligned, img_cells,
         return
     rows, cols = merge_history[-1]["cellblock"].block_size()
 
-    if show_spanning_tree:
-        for i, merge in enumerate(merge_history):
-            # longer interval for last iteration
-            interval_multiplier = 1 if i < len(merge_history) - 1 else 4
-            _display_remaining_pieces(img_cells_unaligned, merged_id_list, rows, cols,
-                                      merge["celldata"].img_id)
-            _display_minimum_spanning_tree(merge, img_cells, rows, cols,
-                                           str(i + 1) + "/" + str(len(merge_history)),
-                                           interval_multiplier * interval_millis)
+    try:
+        if show_spanning_tree:
+            for i, merge in enumerate(merge_history):
+                # longer interval for last iteration
+                interval_multiplier = 1 if i < len(merge_history) - 1 else 4
+                _display_remaining_pieces(img_cells_unaligned, merged_id_list, rows, cols,
+                                          merge["celldata"].img_id)
+                if _display_minimum_spanning_tree(merge, img_cells, rows, cols,
+                                                  str(i + 1) + "/" + str(len(merge_history)),
+                                                  interval_multiplier * interval_millis):
+                    break
 
-    else:
-        for i, merge in enumerate(merge_history):
-            # longer interval for last iteration
-            interval_multiplier = 1 if i < len(merge_history) - 1 else 4
-            _display_remaining_pieces(img_cells_unaligned, merged_id_list, rows, cols,
-                                      merge["celldata"].img_id)
-            _display_current_assembly_progress(merge, img_cells, rows, cols,
-                                               str(i + 1) + "/" + str(len(merge_history)),
-                                               i < len(merge_history) - 1,
-                                               interval_multiplier * interval_millis)
-
-    cv2.destroyAllWindows()
+        else:
+            for i, merge in enumerate(merge_history):
+                # longer interval for last iteration
+                interval_multiplier = 1 if i < len(merge_history) - 1 else 4
+                _display_remaining_pieces(img_cells_unaligned, merged_id_list, rows, cols,
+                                          merge["celldata"].img_id)
+                if _display_current_assembly_progress(merge, img_cells, rows, cols,
+                                                      str(i + 1) + "/" + str(len(merge_history)),
+                                                      i < len(merge_history) - 1,
+                                                      interval_multiplier * interval_millis):
+                    break
+    except KeyboardInterrupt:
+        pass
+    finally:
+        cv2.destroyAllWindows()
 
 
 def _display_remaining_pieces(img_cells_unaligned, merged_id_list, rows, cols, merge_id):
@@ -102,6 +108,8 @@ def _display_current_assembly_progress(merge, img_cells, rows, cols, text="", dr
                                        interval_millis=200):
     """
     Private method, shows remaining image fragments.
+    Returns:
+        exit flag (bool): raises flag upon esc keystroke
     """
     cellblock = merge["cellblock"].data
     celldata = merge["celldata"]
@@ -157,12 +165,14 @@ def _display_current_assembly_progress(merge, img_cells, rows, cols, text="", dr
                              str(celldata.score), (30, len(whiteboard) - 50),
                              fontFace=cv2.LINE_AA, fontScale=0.5, color=(255, 255, 255))
     cv2.imshow("jigsaw puzzle solver", whiteboard)
-    cv2.waitKey(interval_millis)
+    return cv2.waitKey(interval_millis) == 27
 
 
 def _display_minimum_spanning_tree(merge, img_cells, rows, cols, text="", interval_millis=200):
     """
     Private method, shows remaining image fragments.
+    Returns:
+        exit flag (bool): raises flag upon esc keystroke
     """
     cellblock = merge["cellblock"].data
     bottom, right, top, left = merge["cellblock"].top, merge["cellblock"].right, \
@@ -223,4 +233,4 @@ def _display_minimum_spanning_tree(merge, img_cells, rows, cols, text="", interv
                              str(merge["celldata"].score), (30, len(whiteboard) - 50),
                              fontFace=cv2.LINE_AA, fontScale=0.5, color=(255, 255, 255))
     cv2.imshow("jigsaw puzzle solver", whiteboard)
-    cv2.waitKey(interval_millis)
+    return cv2.waitKey(interval_millis) == 27
