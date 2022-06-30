@@ -43,7 +43,7 @@ class CellDataTest(unittest.TestCase):
                          "CellData.set() without parameters should not change anything")
 
         self.cell = CellData(1, 2, 3, 4, 5, 6)
-        self.cell.set(transform=7, score=0.9, dir=2)  # partially set values
+        self.cell.set(transform=7, score=0.9, direction=2)  # partially set values
         result = [self.cell.img_id,
                   self.cell.transform,
                   self.cell.score,
@@ -67,8 +67,8 @@ class CellDataTest(unittest.TestCase):
     def test_is_valid(self):
         # test if cell has id > 0
         cell_1 = CellData()
-        cell_2 = CellData(id=0)
-        cell_3 = CellData(id=132412343)
+        cell_2 = CellData(img_id=0)
+        cell_3 = CellData(img_id=132412343)
         result = [cell_1.is_valid(),
                   cell_2.is_valid(),
                   cell_3.is_valid()]
@@ -94,18 +94,18 @@ class CellDataTest(unittest.TestCase):
 
 class CellBlockTest(unittest.TestCase):
     def setUp(self):
-        self.cellblock = CellBlock()
+        self.cellblock = CellBlock(3, 4)
 
     def tearDown(self):
         return
 
     def test_constructor(self):
-        result = [self.cellblock.init,
-                  self.cellblock.max_h, self.cellblock.max_w,
-                  self.cellblock._data_len,
+        result = [self.cellblock.max_h, self.cellblock.max_w,
                   self.cellblock.bottom, self.cellblock.top, self.cellblock.left, self.cellblock.right
                   ]
-        expected = [-1, -1, -float("inf"), -1, -1, -1]
+        expected = [3, 4, 4, 4, 4, 4]
+        self.assertEqual(result, expected, "incorrect constructor behavior")
 
-
-
+    def test_activate_cell(self):
+        cblock = CellBlock(2, 4)
+        cell = CellData()
