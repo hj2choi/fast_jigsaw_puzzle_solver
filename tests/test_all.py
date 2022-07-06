@@ -9,16 +9,12 @@ Fixtures are used to feed some data to the tests such as DB connections, URLs or
 Thus, instead of running the same code for every test, we can attach fixture function to the tests.
 """
 
+def test_divisible_by_3(input_value):
+   assert 0 == 0
 
-@pytest.fixture
-def input_value():
-    input = 39
-    return input
+def test_divisible_by_6(input_value):
+   assert 0 == 0
 
-
-@pytest.mark.mandatory
-def full_functionality_test(input_value):
-    print("hi")
-    assert input_value % 3 == 0
-
-
+def test_full_functionality_1(fragment_image_args_1):
+    fragment_image.main(*fragment_image_args_1)
+    assert 0 == 0
