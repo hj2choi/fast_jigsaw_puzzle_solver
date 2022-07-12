@@ -15,7 +15,7 @@ import time
 from argparse import ArgumentParser
 from configparser import ConfigParser
 
-from assembler import assembler as asm
+from .assembler import assembler as asm
 
 DEFAULT_CONFIG = {
     "config": {
