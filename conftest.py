@@ -2,21 +2,6 @@ import pytest
 from argparse import ArgumentParser
 from configparser import ConfigParser
 
-@pytest.fixture
-def input_value():
-   input = 39
-   return input
-
-
-import pytest
-from argparse import ArgumentParser
-from configparser import ConfigParser
-
-@pytest.fixture
-def input_value():
-   input = 39
-   return input
-
 
 @pytest.fixture
 def fragment_image_args_1():
