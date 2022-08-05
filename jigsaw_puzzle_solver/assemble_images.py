@@ -59,7 +59,7 @@ def main(args, cfg):
     sys.stdout = sys.__stdout__  # restore stdout
     print("total elapsed time:", time.time() - s_time, "seconds", flush=True)
     if show_assembly_animation:
-        assembler.start_assembly_animation(animation_interval)
+        assembler.start_assembly_animation(args.show_spanning_tree, animation_interval)
 
 
 if __name__ == '__main__':
@@ -72,6 +72,8 @@ if __name__ == '__main__':
                     help='increase output verbosity')
     AP.add_argument('--show_animation', '-a', required=False, action='store_true',
                     help='show image reconstruction animation')
+    AP.add_argument('--show_spanning_tree', '-t', required=False, action='store_true',
+                    help='show minimum spanning tree on top of the animation (-a option requried)')
     AP.add_argument('--config_file', '-c', required=False, default="./config/config.ini",
                     action='store_true', help='configuration ini file')
     PARSED_ARGS = AP.parse_args()
