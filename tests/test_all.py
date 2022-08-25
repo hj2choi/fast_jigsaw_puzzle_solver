@@ -39,15 +39,9 @@ def validate_reconstructed_img(original, reconstructed):
     return False
 
 
-def test_suite_1(fragment_image_args_1, assemble_images_args_1):
+def test_suite_1():
     # test suite 1
-    fragment_image.main(*fragment_image_args_1)
-    assemble_images.main(*assemble_images_args_1)
-
-    original_image_path = fragment_image_args_1[0].image
-    reconstructed_image_path = os.path.join(assemble_images_args_1[1]["config"]["output_dir"],
-                                            assemble_images_args_1[0].out_filename+".png")
-    print(original_image_path)
-    print(reconstructed_image_path)
-    assert validate_reconstructed_img(cv2.imread(original_image_path),
-                                      cv2.imread(reconstructed_image_path))
+    os.system("python ./jigsaw_puzzle_solver/fragment_image.py -c tests/config/tests_config.ini sample_images/testimg_1.jpg 4 2 test_suite_1")
+    os.system("python ./jigsaw_puzzle_solver/assemble_images.py -c tests/config/tests_config.ini test_suite_1 4 2 test_suite_1_out")
+    assert validate_reconstructed_img(cv2.imread("sample_images/testimg_1.jpg"),
+                                      cv2.imread("images_out/test_suite_1_out.png"))
