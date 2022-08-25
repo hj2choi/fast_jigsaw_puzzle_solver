@@ -75,7 +75,7 @@ if __name__ == '__main__':
     AP.add_argument('--show_spanning_tree', '-t', required=False, action='store_true',
                     help='show minimum spanning tree on top of the animation (-a option requried)')
     AP.add_argument('--config_file', '-c', required=False, default="./config/config.ini",
-                    action='store_true', help='configuration ini file')
+                    action='store', nargs=1, help='configuration ini file')
     PARSED_ARGS = AP.parse_args()
 
     CP = ConfigParser()

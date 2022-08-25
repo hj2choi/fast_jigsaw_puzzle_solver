@@ -121,7 +121,7 @@ if __name__ == '__main__':
     AP.add_argument('--verbose', '-v', required=False, action='store_true',
                     help='increase output verbosity')
     AP.add_argument('--config_file', '-c', required=False, default="./config/config.ini",
-                    action='store_true', help='configuration ini file')
+                    action='store', nargs=1, help='configuration ini file')
     PARSED_ARGS = AP.parse_args()
 
     CP = ConfigParser()
