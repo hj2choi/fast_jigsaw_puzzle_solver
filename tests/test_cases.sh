@@ -2,11 +2,11 @@
 python jigsaw_puzzle_solver/fragment_image.py testimg_1.jpg 3 3 test1 # error
 python jigsaw_puzzle_solver/fragment_image.py sample_images/testimg_1.png 3 3 test1 #error
 
-python jigsaw_puzzle_solver/fragment_image.py -v sample_images/testimg_2.png 2 2 test1 # standard
+python jigsaw_puzzle_solver/fragment_image.py -v sample_images/testimg_2.jpg 2 2 test1 # standard
 python jigsaw_puzzle_solver/fragment_image.py --verbose sample_images/testimg_1.jpg 3 3 test2 # standard
 python jigsaw_puzzle_solver/fragment_image.py sample_images/testimg_4.jpg 2 4 test3 # standard
 python jigsaw_puzzle_solver/fragment_image.py sample_images/testimg_1.jpg 4 1 test4 # edge case
-python jigsaw_puzzle_solver/fragment_image.py sample_images/testimg_5.png 2 2 test5 -v # square images
+python jigsaw_puzzle_solver/fragment_image.py sample_images/testimg_5.jpg 2 2 test5 -v # square images
 python jigsaw_puzzle_solver/fragment_image.py sample_images/testimg_3.png 7 7 test6 # computation heavy 1
 python jigsaw_puzzle_solver/fragment_image.py sample_images/testimg_3.png 10 10 test7 # computation heavy 2
 python jigsaw_puzzle_solver/fragment_image.py sample_images/testimg_3.png 12 14 test8 # computation heavy 3
