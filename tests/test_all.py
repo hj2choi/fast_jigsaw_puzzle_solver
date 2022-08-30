@@ -19,7 +19,8 @@ from jigsaw_puzzle_solver import fragment_image, assemble_images
 
 def validate_reconstructed_img(original, reconstructed):
     """
-    compare two images regardless of their orientation.
+    compares two images regardless of their orientation.
+    crops original image to fit reconstructed one.
 
     Args:
         original (cv2 image)
@@ -36,20 +37,98 @@ def validate_reconstructed_img(original, reconstructed):
     return False
 
 
-def test_suite_1():
-    # test suite 1
-    os.system("python ./jigsaw_puzzle_solver/fragment_image.py " +
-              "-c tests/config/tests_config.ini " +
-              "tests/images/test1.jpg 6 7 test_suite_1")
-    os.system("python ./jigsaw_puzzle_solver/assemble_images.py " +
-              "-c tests/config/tests_config.ini " +
-              "test_suite_1 6 7 test_suite_1_out")
-    assert validate_reconstructed_img(cv2.imread("tests/images/test1.jpg"),
-                                      cv2.imread("images_out/test_suite_1_out.png"))
+def test_integrated_1(gen_fragment_image_cmd, gen_assemble_images_cmd):
+    # integrated test - standard case, jpg file and rectangle slices
+    img_path = "tests/images/test1.jpg"
+    prefix = "integrated_test_1"
+    os.system(gen_fragment_image_cmd(img_path, 6, 7, prefix))
+    os.system(gen_assemble_images_cmd(6, 7, prefix))
+    assert validate_reconstructed_img(cv2.imread(img_path),
+                                      cv2.imread("images_out/" + prefix + ".png"))
 
-'''def test_suite_2():
-    # test suite 2
-    os.system("python ./jigsaw_puzzle_solver/fragment_image.py -c tests/config/tests_config.ini sample_images/testimg_1.jpg 4 2 test_suite_1")
-    os.system("python ./jigsaw_puzzle_solver/assemble_images.py -c tests/config/tests_config.ini test_suite_1 4 2 test_suite_1_out")
-    assert validate_reconstructed_img(cv2.imread("sample_images/testimg_1.jpg"),
-                                      cv2.imread("images_out/test_suite_1_out.png"))'''
+
+def test_integrated_2(gen_fragment_image_cmd, gen_assemble_images_cmd):
+    # integrated test - standard case, png file and square slices
+    img_path = "tests/images/test2.png"
+    prefix = "integrated_test_2"
+    os.system(gen_fragment_image_cmd(img_path, 4, 4, prefix))
+    os.system(gen_assemble_images_cmd(4, 4, prefix))
+    assert validate_reconstructed_img(cv2.imread(img_path),
+                                      cv2.imread("images_out/" + prefix + ".png"))
+
+
+def test_integrated_3(gen_fragment_image_cmd, gen_assemble_images_cmd):
+    # integrated test - edge case
+    img_path = "tests/images/test3.jpg"
+    prefix = "integrated_test_3"
+    os.system(gen_fragment_image_cmd(img_path, 1, 6, prefix))
+    os.system(gen_assemble_images_cmd(6, 1, prefix))
+    assert validate_reconstructed_img(cv2.imread(img_path),
+                                      cv2.imread("images_out/" + prefix + ".png"))
+
+
+def test_integrated_4(gen_fragment_image_cmd, gen_assemble_images_cmd):
+    # integrated test - standard case, computation heavy
+    img_path = "tests/images/test4.png"
+    prefix = "integrated_test_4"
+    os.system(gen_fragment_image_cmd(img_path, 11, 12, prefix))
+    os.system(gen_assemble_images_cmd(11, 12, prefix))
+    assert validate_reconstructed_img(cv2.imread(img_path),
+                                      cv2.imread("images_out/" + prefix + ".png"))
+
+
+def test_integrated_5(gen_fragment_image_cmd, gen_assemble_images_cmd):
+    # integrated test - error case: row col mismatch
+    # it should run succesfully
+    img_path = "tests/images/test5.png"
+    prefix = "integrated_test_5"
+    os.system(gen_fragment_image_cmd(img_path, 2, 3, prefix))
+    os.system(gen_assemble_images_cmd(8, 5, prefix))
+    assert validate_reconstructed_img(cv2.imread(img_path),
+                                      cv2.imread("images_out/" + prefix + ".png"))
+
+
+def test_integrated_6(gen_fragment_image_cmd, gen_assemble_images_cmd):
+    # integrated test - error case: row col mismatch
+    # only check for safe program exit
+    img_path = "tests/images/test5.png"
+    prefix = "integrated_test_6"
+    os.system(gen_fragment_image_cmd(img_path, 2, 3, prefix))
+    ret = os.system(gen_assemble_images_cmd(1, 2, prefix))
+    assert ret == 0
+
+
+def test_integrated_7(gen_fragment_image_cmd, gen_assemble_images_cmd):
+    # integrated test - error case: unsuccesful reconstruction
+    # only check for safe program exit
+    img_path = "tests/images/test5.png"
+    prefix = "integrated_test_7"
+    os.system(gen_fragment_image_cmd(img_path, 2, 8, prefix))
+    ret = os.system(gen_assemble_images_cmd(2, 8, prefix))
+    assert ret == 0
+
+
+def test_integrated_8(gen_fragment_image_cmd, gen_assemble_images_cmd):
+    # integrated test - reuse same prefix
+    # it should run successfully
+    img_path = "tests/images/test1.jpg"
+    img_path_2 = "tests/images/test2.png"
+    prefix = "integrated_test_8"
+    os.system(gen_fragment_image_cmd(img_path, 2, 2, prefix))
+    os.system(gen_fragment_image_cmd(img_path_2, 3, 3, prefix))
+    os.system(gen_assemble_images_cmd(3, 3, prefix))
+    assert validate_reconstructed_img(cv2.imread(img_path_2),
+                                      cv2.imread("images_out/" + prefix + ".png"))
+
+
+def test_integrated_9(gen_fragment_image_cmd, gen_assemble_images_cmd):
+    # integrated test - reuse same prefix
+    # it should run successfully
+    img_path = "tests/images/test1.jpg"
+    img_path_2 = "tests/images/test2.png"
+    prefix = "integrated_test_9"
+    os.system(gen_fragment_image_cmd(img_path, 3, 3, prefix))
+    os.system(gen_fragment_image_cmd(img_path_2, 2, 2, prefix))
+    os.system(gen_assemble_images_cmd(2, 2, prefix))
+    assert validate_reconstructed_img(cv2.imread(img_path_2),
+                                      cv2.imread("images_out/" + prefix + ".png"))
