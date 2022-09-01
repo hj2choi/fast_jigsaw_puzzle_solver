@@ -23,7 +23,7 @@ import numpy as np
 DEFAULT_CONFIG = {
     "config": {
         "fragments_dir": "image_fragments",
-        "debug": False
+        "debug": True
     }
 }
 RANDOM_SEED = 32  # for reproducibility
@@ -97,8 +97,15 @@ def main(args, cfg):
 
     if not verbose:
         sys.stdout = open(os.devnull, 'w')  # block stdout
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+
+    # remove all image fragment files sharing the same designated prefix.
+    for file in filter(lambda fname: fname.startswith(args.out_prefix) and
+                        fname.endswith(".png"), os.listdir(output_dir)):
+        os.remove(os.path.join(output_dir, file))
+
     # slice image into uniform shapes and process each slices
     h, w = len(img) // args.rows, len(img[0]) // args.cols  # height and width
     for i in range(args.rows):
@@ -107,6 +114,7 @@ def main(args, cfg):
             process_image_segment(img[top: top + h, left: left + w],
                                   os.path.join(output_dir, args.out_prefix),
                                   i*args.cols+j)
+
     sys.stdout = sys.__stdout__  # restore stdout
     print("fragmented image into", args.rows * args.cols, "slices. ")
     print(time.time() - s_time, "seconds elapsed")
