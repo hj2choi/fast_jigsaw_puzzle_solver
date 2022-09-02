@@ -90,7 +90,7 @@ class ImageAssembler:
                             all_transformations.append(np.copy(np.rot90(img, i)))
                         raw_images.append(all_transformations)
                         raw_images_unaligned.append(all_transformations)
-                    # rectangle images
+                    # rectangular images: reduce 3d distance matrix by 2x.
                     else:
                         raw_images_unaligned.append([img, np.flip(img, 1),
                                                      np.flip(img, 0), np.flip(np.flip(img, 0), 1)])

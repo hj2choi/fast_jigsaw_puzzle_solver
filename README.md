@@ -10,16 +10,17 @@
 
 
 ### Dependencies
-python 3.7<br>
-numpy 1.16<br>
-opencv-python 4.1.2
+python 3.7+<br>
+numpy 1.16+<br>
+opencv-python 4.1.2+
+pytest
 
 ## Execution guide
 ### Quick demo with animation
 ```bash
 pip install -r requirements.txt
 bash demo.sh
-```
+```  
 
 #### fragment_image.py: slice and randomly transform image
 ```bash
@@ -35,6 +36,7 @@ assemble_images.py [OPTION] ${input_filename_prefix} ${x_slice} ${y_slice} ${out
 ```
 -v: *increase verbosity*<br/>
 -a: *show animation*<br/>
+-t: *show minimum spanning tree on top of the animation*<br/>
 <img src="https://hj2choi.github.io/images/external/merge_image.png" width="300" title="merge image">
 
 ## config.ini
@@ -77,10 +79,10 @@ in all cases, <b>C = O(N)</b></br>
 | <i>similarity matrix</i>      | <i>O(256N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i><b>O(16N<sup>2</sup>)</b></i> |
 | traverse all images           | O(N) | O(N) | O(N) | O(N) |
 | traverse all positions        | O(4N) | O(4N) | - | - |
-| argmax(img at pos(x,y))       | O(256N) | O(32N)< | O(32N) | O(32N) |
+| argmax(img at pos(x,y))       | O(256N) | O(32N) | O(32N) | O(32N) |
 | validate cellblock shape      | O(4N) | O(1) | O(1) | O(1) |
 | <i>(PQueue)</i> remove by ID  | - | O(C) | O(ClogN) | <b>O(C)</b> |
-| <i>(PQueue)</i> extract_min() | - | - | O(logN) | <b>O(1)</b> |
+| <i>(PQueue)</i> extract_min() | - | - | O(1) | <b>O(1)</b> |
 | <i>(PQueue)</i> enqueue       | - | - | <b>O(logN)</b> | O(N) |
 | <b>Total time complexity</b> | <i>O(256N<sup>2</sup>)</i></br>+O(4096N<sup>4</sup>) | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(128N<sup>3</sup>) | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(3CNlog(N))</br> | <i>O(16N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(N(C+N)) |
 | <b>=</b>  | O(N<sup>4</sup>) | O(N<sup>3</sup>) | O(N<sup>2</sup>log(N)) | <b>O(N<sup>2</sup>)</b> |

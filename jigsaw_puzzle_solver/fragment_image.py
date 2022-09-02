@@ -103,7 +103,7 @@ def main(args, cfg):
 
     # remove all image fragment files sharing the same designated prefix.
     for file in filter(lambda fname: fname.startswith(args.out_prefix) and
-                        fname.endswith(".png"), os.listdir(output_dir)):
+                       fname.endswith(".png"), os.listdir(output_dir)):
         os.remove(os.path.join(output_dir, file))
 
     # slice image into uniform shapes and process each slices

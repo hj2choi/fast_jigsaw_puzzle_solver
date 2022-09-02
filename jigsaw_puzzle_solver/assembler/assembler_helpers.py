@@ -63,6 +63,8 @@ possible src orientations = rotation x flip x 4directions = 4 * 2 * 4 = 32
              [8~15]
 total possible cases = 32 x 8 tgt cell orientations = 32 x 8 = 256
 below is the mapping table for [256 possible cases] => [32 cases with fixed tgt orientation]
+
+With rectangular images, we can pre-align images and halve the number of rotations.
 """
 _MAPPING_TABLE8 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
                    17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -84,14 +86,14 @@ _MAPPING_TABLE8 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 
 def map8(tgt_transform, src_transform):
     """
-    rectangular cells: mapping for [254 cases] = >[32 cases with fixed tgt]
+    square cells: mapping for [254 cases] = >[32 cases with fixed tgt]
     """
     return _MAPPING_TABLE8[(tgt_transform << 5) + src_transform]
 
 
 def mat_sym_dmap32(trf):
     """
-    rectangular image cells: used for filling out symmetric part
+    square image cells: used for filling out symmetric part
     (lower triangular region) in distance matrix
     """
     return [8, 19, 2, 25, 4, 21, 14, 31, 0, 27, 10, 17, 12, 29, 6, 23,
@@ -100,7 +102,7 @@ def mat_sym_dmap32(trf):
 
 def mat_sym_dmap16(trf):
     """
-    square image cells: used for filling out symmetric part
+    rectangular image cells: used for filling out symmetric part
     (lower triangular region) in distance matrix
     """
     return [4, 5, 2, 3, 0, 1, 6, 7, 12, 9, 14, 11, 8, 13, 10, 15][trf]
@@ -108,7 +110,7 @@ def mat_sym_dmap16(trf):
 
 def map4(tgt_transform, src_transform):
     """
-    square image cells: mapping for [64 cases] = >[16 cases with fixed tgt]
+    rectangular image cells: mapping for [64 cases] = >[16 cases with fixed tgt]
     """
     return {
         0: src_transform, 1: _flip_x(src_transform),
@@ -118,66 +120,13 @@ def map4(tgt_transform, src_transform):
 
 def _flip_x(i):
     """
-    square image cells: mapping for horizontal flip
+    rectangular image cells: mapping for horizontal flip
     """
     return [1, 0, 3, 2, 5, 4, 7, 6, 13, 12, 15, 14, 9, 8, 11, 10][i]
 
 
 def _flip_y(i):
     """
-    square image cells: mapping for vertical flip
+    rectangular image cells: mapping for vertical flip
     """
     return [6, 7, 4, 5, 2, 3, 0, 1, 10, 11, 8, 9, 14, 15, 12, 13][i]
-
-
-"""
-    mapping table generation routines.
-"""
-
-
-def _generate_mapping_table8(sim_matrix):
-    """
-    Automatically build index map for rectangular images. (Only run once)
-    """
-    mapping_table = []
-    for i in range(len(sim_matrix[0][1])):
-        flag = 0
-        for j in range(32):
-            print(i, j, "=>", sim_matrix[0][2][i], sim_matrix[0][2][j], end="")
-            if np.abs(sim_matrix[0][2][i] - sim_matrix[0][2][j]) < 0.0000001:
-                if not flag:
-                    print(" match", end="")
-                    flag = 1
-                    mapping_table.append(j)
-                else:
-                    print("\n SOMETHING's WRONG")
-                    return
-            print()
-        print()
-
-    print(mapping_table)
-
-
-def _generate_mapping_table4(sim_matrix):
-    """
-    Automatically build index map for square images. (Only run once)
-    """
-    print(sim_matrix[0][1])
-    print(sim_matrix[1][0])
-    mapping_table = []
-    for i in range(32):
-        flag = 0
-        for j in range(32):
-            print(i, j, "=>", sim_matrix[0][1][i], sim_matrix[1][0][j], end="")
-            if np.abs(sim_matrix[0][1][i] - sim_matrix[1][0][j]) < 0.0000001:
-                if not flag:
-                    print(" match", end="")
-                    flag = 1
-                    mapping_table.append(j)
-                else:
-                    print("\n SOMETHING's WRONG")
-                    return
-            print()
-        print()
-
-    print(mapping_table)
