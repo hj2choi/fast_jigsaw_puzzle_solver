@@ -49,17 +49,17 @@ def test_integrated_1(gen_fragment_image_cmd, gen_assemble_images_cmd):
 
 def test_integrated_2(gen_fragment_image_cmd, gen_assemble_images_cmd):
     # integrated test - standard case, png file and square slices
-    img_path = "tests/images/test2.png"
+    img_path = "tests/images/test3.jpg"
     prefix = "integrated_test_2"
-    os.system(gen_fragment_image_cmd(img_path, 4, 4, prefix))
-    os.system(gen_assemble_images_cmd(4, 4, prefix))
+    os.system(gen_fragment_image_cmd(img_path, 3, 3, prefix))
+    os.system(gen_assemble_images_cmd(3, 3, prefix))
     assert validate_reconstructed_img(cv2.imread(img_path),
                                       cv2.imread("images_out/" + prefix + ".png"))
 
 
 def test_integrated_3(gen_fragment_image_cmd, gen_assemble_images_cmd):
     # integrated test - edge case
-    img_path = "tests/images/test3.jpg"
+    img_path = "tests/images/test2.png"
     prefix = "integrated_test_3"
     os.system(gen_fragment_image_cmd(img_path, 1, 6, prefix))
     os.system(gen_assemble_images_cmd(6, 1, prefix))
