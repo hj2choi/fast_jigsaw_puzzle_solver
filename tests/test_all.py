@@ -27,7 +27,7 @@ def validate_reconstructed_img(original, reconstructed):
         reconstructed (cv2 image)
     """
     for _ in range(4):
-        reconstructed = cv2.rotate(reconstructed, cv2.cv2.ROTATE_90_CLOCKWISE)
+        reconstructed = cv2.rotate(reconstructed, cv2.ROTATE_90_CLOCKWISE)
         for _ in range(2):
             reconstructed = cv2.flip(reconstructed, 0)
             original_fitted = original[:reconstructed.shape[0], :reconstructed.shape[1]]
