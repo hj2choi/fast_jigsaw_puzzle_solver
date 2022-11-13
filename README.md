@@ -10,10 +10,9 @@
 
 
 ### Dependencies
-python 3.7+<br>
-numpy 1.16+<br>
-opencv-python 4.1.2+
-pytest
+python 3.7+  
+numpy 1.16+  
+opencv-python 4.1.2+  
 
 ## Execution guide
 ### Quick demo with animation

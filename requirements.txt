@@ -1,3 +1,2 @@
-numpy==1.20.2
-opencv-python==4.1.2.30
-pytest
+numpy==1.*
+opencv-python==4.*
