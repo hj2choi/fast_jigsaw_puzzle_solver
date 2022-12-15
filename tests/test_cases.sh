@@ -8,9 +8,9 @@ python jigsaw_puzzle_solver/fragment_image.py sample_images/cybercity.jpg 1 6 te
 python jigsaw_puzzle_solver/fragment_image.py sample_images/james_webb.jpg 7 7 test5 # computation heavy 1
 python jigsaw_puzzle_solver/fragment_image.py sample_images/mountain_view.jpg 12 14 test6 # computation heavy 2 - parallel processing3
 
-python jigsaw_puzzle_solver/assemble_images.py test1 3 3 test1 # standard
-python jigsaw_puzzle_solver/assemble_images.py test2 2 3 test2 # standard
-python jigsaw_puzzle_solver/assemble_images.py test3 2 4 test3 # standard
-python jigsaw_puzzle_solver/assemble_images.py test4 1 6 test4 # edge case
-python jigsaw_puzzle_solver/assemble_images.py test5 7 7 test5  # computation heavy 1, correct
-python jigsaw_puzzle_solver/assemble_images.py test6 12 14 test6 # computation heavy 2, parallel processing3
+python jigsaw_puzzle_solver/assemble_images.py test1 3 3 -at # standard
+python jigsaw_puzzle_solver/assemble_images.py test2 2 3 -at # standard
+python jigsaw_puzzle_solver/assemble_images.py test3 2 4 -at # standard
+python jigsaw_puzzle_solver/assemble_images.py test4 1 6 -at # edge case
+python jigsaw_puzzle_solver/assemble_images.py test5 7 7 -at  # computation heavy 1, correct
+python jigsaw_puzzle_solver/assemble_images.py test6 12 14 -at # computation heavy 2, parallel processing3

@@ -1,2 +1,3 @@
 numpy==1.*
 opencv-python==4.*
+pytest

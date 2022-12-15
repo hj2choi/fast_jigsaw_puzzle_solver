@@ -1,2 +1,0 @@
-import unittest
-from jigsaw_puzzle_solver import fragment_image

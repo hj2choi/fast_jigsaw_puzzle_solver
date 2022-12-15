@@ -9,12 +9,18 @@ Thus, instead of running the same code for every test, we can attach fixture fun
 """
 import os
 import math
+import shutil
+from unittest.mock import patch
 
 import numpy as np
 import pytest
 import cv2
 
 from jigsaw_puzzle_solver import fragment_image, assemble_images
+from jigsaw_puzzle_solver.assembler import assembler as asm
+
+TESTS_FRAGMENTS_DIR = os.path.join("tests", "temp_fragments")
+TESTS_OUTPUT_DIR = os.path.join("tests", "temp_out")
 
 
 def validate_reconstructed_img(original, reconstructed):
@@ -37,98 +43,49 @@ def validate_reconstructed_img(original, reconstructed):
     return False
 
 
-def test_integrated_1(gen_fragment_image_cmd, gen_assemble_images_cmd):
-    # integrated test - standard case, jpg file and rectangle slices
-    img_path = "tests/images/test1.jpg"
-    prefix = "integrated_test_1"
-    os.system(gen_fragment_image_cmd(img_path, 6, 7, prefix))
-    os.system(gen_assemble_images_cmd(6, 7, prefix))
+def setup():
+    return
+
+
+def teardown():
+    shutil.rmtree(TESTS_FRAGMENTS_DIR)
+    shutil.rmtree(TESTS_OUTPUT_DIR)
+
+
+@patch("cv2.imshow", return_value=None)
+@pytest.mark.parametrize("img_path, prefix, cols, rows, anim, anim_mst", [
+    ("tests/images/test1.jpg", "integrated1", 6, 7, False, False),  # standard case, jpg file and rectangles
+    ("tests/images/test5.png", "integrated2", 2, 3, False, False),  # standard case, png file
+    ("tests/images/test3.jpg", "integrated3", 3, 3, False, False),  # standard case, jpg file and squares
+    ("tests/images/test2.png", "integrated4", 1, 6, False, False),  # edge case
+    ("tests/images/test2.png", "integrated5", 1, 1, False, False),  # edge case, no slicing at all
+    ("tests/images/test4.png", "integrated6", 11, 12, False, False),  # standard, computation heavy
+    ("tests/images/test1.jpg", "integrated7", 2, 3, True, False),  # draw animation
+    ("tests/images/test1.jpg", "integrated10", 2, 3, True, True),  # draw animation with MST on top
+    ("tests/images/test1.jpg", "integrated10", 3, 4, True, True),  # reuse fragment image prefix names
+    ("tests/images/test2.png", "integrated10", 2, 2, True, True)  # reuse fragment image prefix names
+])
+def test_integrated_correct_cases(mock_imshow, img_path, prefix, cols, rows, anim, anim_mst):
+    # integrated test, check for successful reconstruction
+    fragment_image.main(img_path, cols, rows, prefix,
+                        verbose=True, fragments_dir=TESTS_FRAGMENTS_DIR)
+    assemble_images.main(prefix, cols, rows, imgs_dir=TESTS_FRAGMENTS_DIR, out_dir=TESTS_OUTPUT_DIR,
+                         verbose=True, show_anim=anim, anim_interval=1, show_mst_on_anim=anim_mst)
     assert validate_reconstructed_img(cv2.imread(img_path),
-                                      cv2.imread("images_out/" + prefix + ".png"))
+                                      cv2.imread(os.path.join(TESTS_OUTPUT_DIR, prefix+".png")))
 
 
-def test_integrated_2(gen_fragment_image_cmd, gen_assemble_images_cmd):
-    # integrated test - standard case, png file and square slices
-    img_path = "tests/images/test3.jpg"
-    prefix = "integrated_test_2"
-    os.system(gen_fragment_image_cmd(img_path, 3, 3, prefix))
-    os.system(gen_assemble_images_cmd(3, 3, prefix))
-    assert validate_reconstructed_img(cv2.imread(img_path),
-                                      cv2.imread("images_out/" + prefix + ".png"))
+@patch("cv2.imshow", return_value=None)
+@pytest.mark.parametrize("img_path, prefix, cols, rows", [
+    ("tests/images/test5.png", "integrated_incorrect1", 1, 10),  # incorrect reconstruction
+    ("tests/images/test5.png", "integrated_incorrect2", 10, 1),  # incorrect reconstruction 2
+])
+def test_integrated_incorrect_cases(mock_imshow, img_path, prefix, cols, rows):
+    # integrated test, only check for safe program exit
+    fragment_image.main(img_path, cols, rows, prefix,
+                        verbose=True, fragments_dir=TESTS_FRAGMENTS_DIR)
+    assemble_images.main(prefix, cols, rows, imgs_dir=TESTS_FRAGMENTS_DIR, out_dir=TESTS_OUTPUT_DIR,
+                         verbose=True, show_anim=True, anim_interval=1, show_mst_on_anim=True)
+    # an assert statement is deliberately omitted here.
 
 
-def test_integrated_3(gen_fragment_image_cmd, gen_assemble_images_cmd):
-    # integrated test - edge case
-    img_path = "tests/images/test2.png"
-    prefix = "integrated_test_3"
-    os.system(gen_fragment_image_cmd(img_path, 1, 6, prefix))
-    os.system(gen_assemble_images_cmd(6, 1, prefix))
-    assert validate_reconstructed_img(cv2.imread(img_path),
-                                      cv2.imread("images_out/" + prefix + ".png"))
-
-
-def test_integrated_4(gen_fragment_image_cmd, gen_assemble_images_cmd):
-    # integrated test - standard case, computation heavy
-    img_path = "tests/images/test4.png"
-    prefix = "integrated_test_4"
-    os.system(gen_fragment_image_cmd(img_path, 11, 12, prefix))
-    os.system(gen_assemble_images_cmd(11, 12, prefix))
-    assert validate_reconstructed_img(cv2.imread(img_path),
-                                      cv2.imread("images_out/" + prefix + ".png"))
-
-
-def test_integrated_5(gen_fragment_image_cmd, gen_assemble_images_cmd):
-    # integrated test - error case: row col mismatch
-    # it should run succesfully
-    img_path = "tests/images/test5.png"
-    prefix = "integrated_test_5"
-    os.system(gen_fragment_image_cmd(img_path, 2, 3, prefix))
-    os.system(gen_assemble_images_cmd(8, 5, prefix))
-    assert validate_reconstructed_img(cv2.imread(img_path),
-                                      cv2.imread("images_out/" + prefix + ".png"))
-
-
-def test_integrated_6(gen_fragment_image_cmd, gen_assemble_images_cmd):
-    # integrated test - error case: row col mismatch
-    # only check for safe program exit
-    img_path = "tests/images/test5.png"
-    prefix = "integrated_test_6"
-    os.system(gen_fragment_image_cmd(img_path, 2, 3, prefix))
-    ret = os.system(gen_assemble_images_cmd(1, 2, prefix))
-    assert ret == 0
-
-
-def test_integrated_7(gen_fragment_image_cmd, gen_assemble_images_cmd):
-    # integrated test - error case: unsuccesful reconstruction
-    # only check for safe program exit
-    img_path = "tests/images/test5.png"
-    prefix = "integrated_test_7"
-    os.system(gen_fragment_image_cmd(img_path, 2, 8, prefix))
-    ret = os.system(gen_assemble_images_cmd(2, 8, prefix))
-    assert ret == 0
-
-
-def test_integrated_8(gen_fragment_image_cmd, gen_assemble_images_cmd):
-    # integrated test - reuse same prefix
-    # it should run successfully
-    img_path = "tests/images/test1.jpg"
-    img_path_2 = "tests/images/test2.png"
-    prefix = "integrated_test_8"
-    os.system(gen_fragment_image_cmd(img_path, 2, 2, prefix))
-    os.system(gen_fragment_image_cmd(img_path_2, 3, 3, prefix))
-    os.system(gen_assemble_images_cmd(3, 3, prefix))
-    assert validate_reconstructed_img(cv2.imread(img_path_2),
-                                      cv2.imread("images_out/" + prefix + ".png"))
-
-
-def test_integrated_9(gen_fragment_image_cmd, gen_assemble_images_cmd):
-    # integrated test - reuse same prefix
-    # it should run successfully
-    img_path = "tests/images/test1.jpg"
-    img_path_2 = "tests/images/test2.png"
-    prefix = "integrated_test_9"
-    os.system(gen_fragment_image_cmd(img_path, 3, 3, prefix))
-    os.system(gen_fragment_image_cmd(img_path_2, 2, 2, prefix))
-    os.system(gen_assemble_images_cmd(2, 2, prefix))
-    assert validate_reconstructed_img(cv2.imread(img_path_2),
-                                      cv2.imread("images_out/" + prefix + ".png"))
