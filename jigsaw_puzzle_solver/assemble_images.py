@@ -28,8 +28,7 @@ DEFAULT_CONFIG = {
 }
 
 
-def main(imgs_prefix, cols, rows,
-         imgs_dir="image_fragments", out_dir="images_out", verbose=False,
+def main(imgs_prefix, imgs_dir="image_fragments", out_dir="images_out", verbose=False,
          show_anim=True, anim_interval=200, show_mst_on_anim=False):
     """
     main jigsaw puzzle solver routine.
@@ -37,10 +36,8 @@ def main(imgs_prefix, cols, rows,
     s_time = time.time()
     # initialize
     assembler = asm.ImageAssembler.load_from_filepath(
-        imgs_dir, imgs_prefix, cols, rows)
+        imgs_dir, imgs_prefix)
     print("assemble_image.py:", len(assembler.raw_imgs), "files loaded", flush=True)
-    if assembler.max_rows * assembler.max_cols != len(assembler.raw_imgs):
-        print("WARNING: incorrect slicing dimension.")
     if not verbose:
         sys.stdout = open(os.devnull, 'w')  # block stdout
 
@@ -60,8 +57,6 @@ def main(imgs_prefix, cols, rows,
 if __name__ == '__main__':
     ap = ArgumentParser()
     ap.add_argument('img_prefix', type=str, help='prefix to image fragments')
-    ap.add_argument('cols', type=int, help='Number of column slices')
-    ap.add_argument('rows', type=int, help='Number of row slices')
     ap.add_argument('--verbose', '-v', required=False, action='store_true',
                     help='increase output verbosity')
     ap.add_argument('--show_animation', '-a', required=False, action='store_true',
@@ -76,7 +71,7 @@ if __name__ == '__main__':
     cp.read_dict(DEFAULT_CONFIG)
     cp.read(args.config_file)
 
-    main(args.img_prefix, args.cols, args.rows, cp.get("config", "fragments_dir"), cp.get("config", "output_dir"),
+    main(args.img_prefix, cp.get("config", "fragments_dir"), cp.get("config", "output_dir"),
          cp.getboolean("config", "debug") or args.verbose,
          cp.getboolean("config", "show_assembly_animation") or args.show_animation,
          int(cp.get("config", "animation_interval_millis")), args.show_spanning_tree

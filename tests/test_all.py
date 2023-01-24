@@ -69,7 +69,7 @@ def test_integrated_correct_cases(mock_imshow, img_path, prefix, cols, rows, ani
     # integrated test, check for successful reconstruction
     fragment_image.main(img_path, cols, rows, prefix,
                         verbose=True, fragments_dir=TESTS_FRAGMENTS_DIR)
-    assemble_images.main(prefix, cols, rows, imgs_dir=TESTS_FRAGMENTS_DIR, out_dir=TESTS_OUTPUT_DIR,
+    assemble_images.main(prefix, imgs_dir=TESTS_FRAGMENTS_DIR, out_dir=TESTS_OUTPUT_DIR,
                          verbose=True, show_anim=anim, anim_interval=1, show_mst_on_anim=anim_mst)
     assert validate_reconstructed_img(cv2.imread(img_path),
                                       cv2.imread(os.path.join(TESTS_OUTPUT_DIR, prefix+".png")))
@@ -84,8 +84,8 @@ def test_integrated_incorrect_cases(mock_imshow, img_path, prefix, cols, rows):
     # integrated test, only check for safe program exit
     fragment_image.main(img_path, cols, rows, prefix,
                         verbose=True, fragments_dir=TESTS_FRAGMENTS_DIR)
-    assemble_images.main(prefix, cols, rows, imgs_dir=TESTS_FRAGMENTS_DIR, out_dir=TESTS_OUTPUT_DIR,
+    assemble_images.main(prefix, imgs_dir=TESTS_FRAGMENTS_DIR, out_dir=TESTS_OUTPUT_DIR,
                          verbose=True, show_anim=True, anim_interval=1, show_mst_on_anim=True)
-    # an assert statement is deliberately omitted here.
+    # an assert statement is deliberately omitted here
 
 

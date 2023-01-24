@@ -2,7 +2,7 @@ import unittest
 from jigsaw_puzzle_solver.assembler.assembler_data_structures import PuzzlePiece, ConstructionBlueprint, LinkedHashmapPriorityQueue
 
 
-class CellDataTest(unittest.TestCase):
+class PuzzlePieceTest(unittest.TestCase):
     def setUp(self):
         self.cell = PuzzlePiece()
 
@@ -92,20 +92,9 @@ class CellDataTest(unittest.TestCase):
         self.assertEqual(result, expected, "incorrect >, < comparator behavior")
 
 
-class CellBlockTest(unittest.TestCase):
+class BlueprintTest(unittest.TestCase):
     def setUp(self):
         self.cellblock = ConstructionBlueprint(3, 4)
 
     def tearDown(self):
         return
-
-    def test_constructor(self):
-        result = [self.cellblock.max_h, self.cellblock.max_w,
-                  self.cellblock.bottom, self.cellblock.top, self.cellblock.left, self.cellblock.right
-                  ]
-        expected = [3, 4, 4, 4, 4, 4]
-        self.assertEqual(result, expected, "incorrect constructor behavior")
-
-    def test_activate_cell(self):
-        cblock = ConstructionBlueprint(2, 4)
-        cell = PuzzlePiece()

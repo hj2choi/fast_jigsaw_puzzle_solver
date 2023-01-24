@@ -36,9 +36,6 @@ class ImageAssembler:
         assembler.save_assembled_image()
 
     Attributes:
-        max_rows (int)
-        max_cols (int)
-            max_cols, max_rows are interchangeable
         raw_imgs (2d list of cv2 images):
             collection of puzzle pieces with all possible orientations
             (4 for square pieces, 8 for rectangle ones)
@@ -50,11 +47,10 @@ class ImageAssembler:
         start_assembly_animation(interval_millis: int) -> void
     """
 
-    def __init__(self, data=([], []), max_cols=0, max_rows=0):
-        self.max_rows, self.max_cols = max_rows, max_cols  # as specified in args
+    def __init__(self, data=([], [])):
         self.raw_imgs_unaligned = data[0]  # for visualization
-        self.raw_imgs = data[1]  # image fragments with all combination of transformations
-        self.orientation_cnt = len(self.raw_imgs[0])  # number of possible transformation states
+        self.raw_imgs = data[1]  # image fragments with all combination of orientations
+        self.orientation_cnt = len(self.raw_imgs[0])  # number of possible orientation states
         self.sim_matrix = np.zeros((len(self.raw_imgs), len(self.raw_imgs),
                                     self.orientation_cnt * 4))
         self.idx_map = helpers.map4 if self.orientation_cnt == 4 else helpers.map8
@@ -64,14 +60,12 @@ class ImageAssembler:
         self.merge_history = []  # merge history from first merge to last
 
     @classmethod
-    def load_from_filepath(cls, directory, prefix, max_cols, max_rows):
+    def load_from_filepath(cls, directory, prefix):
         """ Constructor method. Loads all puzzle pieces with given prefix.
 
         Args:
             directory (str): directory storing puzzle pieces
             prefix (str): prefix of fragmented image filenames (should be set fragment_images.py)
-            max_cols (int): columns constraint for image assembly
-            max_rows (int): rows constraint for image assembly (max_cols, max_rows interchangeable)
         """
 
         raw_images = []
@@ -96,7 +90,7 @@ class ImageAssembler:
                         img = np.rot90(img) if len(img) > len(img[0]) else img
                         raw_images.append([img, np.flip(img, 1), np.flip(img, 0),
                                            np.flip(np.flip(img, 0), 1)])
-        return cls((raw_images_unaligned, raw_images), max_cols, max_rows)
+        return cls((raw_images_unaligned, raw_images))
 
     def assemble(self):
         """
@@ -134,7 +128,7 @@ class ImageAssembler:
                   len(self.raw_imgs) - len(unused_ids), "/", len(self.raw_imgs), flush=True)
             self.merge_history.append({"blueprint": copy.deepcopy(blueprint),
                                        "piece": copy.deepcopy(piece)})
-            # print("current-blueprint:\n", blueprint.data)
+            print("current-blueprint:\n", blueprint.data)
             return piece, duplicates
 
         def _enqueue_all_frontiers(frontier_pieces_list):
@@ -154,7 +148,7 @@ class ImageAssembler:
         s_time = time.time()
         self.merge_history = []  # reset merge_history
         unused_ids = [*range(0, len(self.raw_imgs))]  # remaining cells
-        blueprint = ConstructionBlueprint(self.max_rows, self.max_cols)  # blueprint for image reconstruction
+        blueprint = ConstructionBlueprint(len(self.raw_imgs), len(self.raw_imgs))  # blueprint for image reconstruction
         p_queue = LinkedHashmapPriorityQueue(len(self.raw_imgs))  # priority queue for MST algorithm
         p_queue.enqueue(0, PuzzlePiece(0, 0, 1.0, blueprint.top, blueprint.left))  # source node
 

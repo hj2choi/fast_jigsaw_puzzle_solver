@@ -125,7 +125,7 @@ class ConstructionBlueprint:
         # 2D array of puzzle pieces.
         self.data = np.array([[PuzzlePiece(y=i, x=j) for j in range(w_h_size)]
                               for i in range(w_h_size)])
-        self.bottom = self.top = self.left = self.right = max(max_h, max_w)
+        self.bottom = self.top = self.left = self.right = w_h_size // 2  # initial position
 
     def get_active_neighbors(self, y, x):
         """
@@ -167,7 +167,7 @@ class ConstructionBlueprint:
     def activate_position(self, piece):
         """
         activate position y, x (paste puzzle piece at y, x)
-        NOTE: the first piece MUST be pasted at y, x = max(max_h, max_w)
+        NOTE: the first piece MUST be pasted at y, x = w_h_size/2, w_h_size/2
 
         @Parameters
         piece (PuzzlePiece)
