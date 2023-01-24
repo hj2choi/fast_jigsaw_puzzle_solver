@@ -8,7 +8,7 @@ adapted Prim's Minimum Spanning Tree algorithm.
 """
 import os
 import time
-import copy
+import pickle as pkl
 from multiprocessing import Pool
 import cv2
 import numpy as np
@@ -120,15 +120,17 @@ class ImageAssembler:
             Dequeue image cell from the priority queue and place it on the blueprint.
             Then, remove all duplicate image cells from the priority queue.
             """
-            nonlocal p_queue, blueprint, unused_ids
+            nonlocal p_queue, blueprint, unused_ids, partial_elapsed_time
             piece, duplicates = p_queue.dequeue_and_remove_duplicate_ids()
             blueprint.activate_position(piece)
             unused_ids.remove(piece.img_id)
             print("image merged: ", piece.tostring(), "\t",
                   len(self.raw_imgs) - len(unused_ids), "/", len(self.raw_imgs), flush=True)
-            self.merge_history.append({"blueprint": copy.deepcopy(blueprint),
-                                       "piece": copy.deepcopy(piece)})
-            print("current-blueprint:\n", blueprint.data)
+            ss_time = time.time()
+            self.merge_history.append({"blueprint": pkl.loads(pkl.dumps(blueprint)),
+                                       "piece": pkl.loads(pkl.dumps(piece))})
+            partial_elapsed_time += time.time() - ss_time
+            # print("current-blueprint:\n", blueprint.data)
             return piece, duplicates
 
         def _enqueue_all_frontiers(frontier_pieces_list):
@@ -153,6 +155,7 @@ class ImageAssembler:
         p_queue.enqueue(0, PuzzlePiece(0, 0, 1.0, blueprint.top, blueprint.left))  # source node
 
         # the main MST assembly algorithm loop
+        partial_elapsed_time = 0
         while not p_queue.is_empty():
             # do not consider position that's already used up.
             if not blueprint.validate_position(*p_queue.peek().pos()):
@@ -164,6 +167,7 @@ class ImageAssembler:
             _enqueue_all_frontiers(blueprint.get_inactive_neighbors(*piece.pos()) + duplicates)
 
         print("MST assembly algorithm:", time.time() - s_time, "seconds")
+        print("total time deep copying objects for accumulating merge history:", partial_elapsed_time, "seconds")
 
     def save_assembled_image(self, filepath):
         """
