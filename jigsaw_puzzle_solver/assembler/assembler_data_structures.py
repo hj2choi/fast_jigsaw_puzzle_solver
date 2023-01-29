@@ -54,12 +54,21 @@ class PuzzlePiece:
     def __repr__(self):
         return self.__str__()
 
+    def __eq__(self, other):
+        if not isinstance(other, PuzzlePiece):
+            return NotImplemented
+        return self.img_id == other.img_id and self.orientation == other.orientation and \
+            self.x == other.x and self.y == other.y and self.score == other.score
+
+    def __lt__(self, other):
+        return self.score < other.score
+
     def tostring(self):
         """
         represent full instance state in string.
         """
         return ("{id: " + str(self.img_id) + ", t: " + str(self.orientation) +
-                ", (" + str(self.y) + ", " + str(self.x) + "), dir:" + str(self.dir) +
+                ", pos: (" + str(self.y) + ", " + str(self.x) + "), dir:" + str(self.dir) +
                 ", score: " + format(self.score, ".4f") + " }")
 
     def set(self, img_id=-1, orientation=-1, score=-float("inf"), y=-1, x=-1, direction=-1):
@@ -92,9 +101,6 @@ class PuzzlePiece:
         """
         return self.y, self.x
 
-    def __lt__(self, other):
-        return self.score < other.score
-
 
 class ConstructionBlueprint:
     """
@@ -126,6 +132,9 @@ class ConstructionBlueprint:
         self.data = np.array([[PuzzlePiece(y=i, x=j) for j in range(w_h_size)]
                               for i in range(w_h_size)])
         self.bottom = self.top = self.left = self.right = w_h_size // 2  # initial position
+
+    def get(self, y, x):
+        return self.data[y][x]
 
     def get_active_neighbors(self, y, x):
         """
