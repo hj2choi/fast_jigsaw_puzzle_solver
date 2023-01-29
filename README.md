@@ -23,7 +23,7 @@ bash demo.sh
 
 #### fragment_image.py: slice and randomly transform image
 ```bash
-fragment_image.py [OPTION] ${image_file_name} ${x_slice} ${y_slice} ${output_filename_prefix}
+fragment_image.py [OPTION] ${image_file_name} ${x_slice} ${y_slice} ${out_prefix}
 ```
 -v: *increase verbosity*</br>
 <img src="https://hj2choi.github.io/images/external/cut_image.png" width="300" title="fragment image">
@@ -31,7 +31,7 @@ fragment_image.py [OPTION] ${image_file_name} ${x_slice} ${y_slice} ${output_fil
 
 #### assemble_fragments.py: re-assemble image fragments back to original image
 ```bash
-assemble_images.py [OPTION] ${input_filename_prefix} ${x_slice} ${y_slice} ${output_filename}
+assemble_images.py [OPTION] ${in_prefix}
 ```
 -v: *increase verbosity*<br/>
 -a: *show animation*<br/>
