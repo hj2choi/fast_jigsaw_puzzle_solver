@@ -40,6 +40,8 @@ class ImageAssembler:
         raw_imgs (2d list of cv2 images):
             collection of puzzle pieces with all possible orientations
             (4 for square pieces, 8 for rectangle ones)
+        max_rows (int): optional, it can help prevent reconstruction failure.
+        max_cols (int): optional, max_cols, max_rows are interchangeable
 
     Methods:
         assemble() -> void
@@ -48,7 +50,8 @@ class ImageAssembler:
         start_assembly_animation(interval_millis: int) -> void
     """
 
-    def __init__(self, data=([], [])):
+    def __init__(self, data=([], []), max_rows=0, max_cols=0):
+        self.max_rows, self.max_cols = max_rows, max_cols
         self.raw_imgs_unaligned = data[0]  # for visualization
         self.raw_imgs = data[1]  # image fragments with all combination of orientations
         self.orientation_cnt = len(self.raw_imgs[0])  # number of possible orientation states
@@ -63,7 +66,7 @@ class ImageAssembler:
         self.merge_history = []  # assembly history in y, x positions. ex) [[0, 0], [0, 1], [-1,0], ...]
 
     @classmethod
-    def load_from_filepath(cls, directory, prefix):
+    def load_from_filepath(cls, directory, prefix, max_cols=0, max_rows=0):
         """ Constructor method. Loads all puzzle pieces with given prefix.
 
         Args:
@@ -93,7 +96,7 @@ class ImageAssembler:
                         img = np.rot90(img) if len(img) > len(img[0]) else img
                         raw_images.append([img, np.flip(img, 1), np.flip(img, 0),
                                            np.flip(np.flip(img, 0), 1)])
-        return cls((raw_images_unaligned, raw_images))
+        return cls((raw_images_unaligned, raw_images), max_cols, max_rows)
 
     def assemble(self):
         """
@@ -150,9 +153,10 @@ class ImageAssembler:
         s_time = time.time()
         self.merge_history = []  # reset merge_history
         unused_ids = [*range(0, len(self.raw_imgs))]  # remaining cells
-        self.blueprint = ConstructionBlueprint(len(self.raw_imgs), len(self.raw_imgs))  # image reconstruction blueprint
+        self.blueprint = ConstructionBlueprint(self.max_rows if self.max_rows > 0 else len(self.raw_imgs),
+                                               self.max_cols if self.max_cols > 0 else len(self.raw_imgs))
         p_queue = LinkedHashmapPriorityQueue(len(self.raw_imgs))  # priority queue for MST algorithm
-        p_queue.enqueue(0, PuzzlePiece(0, 0, 1.0, self.blueprint.top, self.blueprint.left))  # source node`
+        p_queue.enqueue(0, PuzzlePiece(0, 0, 1.0, self.blueprint.top, self.blueprint.left))  # source node
 
         # the main MST assembly algorithm loop
         while not p_queue.is_empty():

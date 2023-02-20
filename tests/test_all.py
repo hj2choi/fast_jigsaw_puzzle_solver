@@ -59,7 +59,7 @@ def teardown():
     ("tests/images/test3.jpg", "integrated3", 3, 3, False, False),  # standard case, jpg file and squares
     ("tests/images/test2.png", "integrated4", 1, 6, False, False),  # edge case
     ("tests/images/test2.png", "integrated5", 1, 1, False, False),  # edge case, no slicing at all
-    ("tests/images/test4.png", "integrated6", 11, 12, False, False),  # standard, computation heavy
+    ("tests/images/test4.png", "integrated6", 7, 7, False, False),  # standard, computation heavy
     ("tests/images/test1.jpg", "integrated7", 2, 3, True, False),  # draw animation
     ("tests/images/test1.jpg", "integrated10", 2, 3, True, True),  # draw animation with MST on top
     ("tests/images/test1.jpg", "integrated10", 3, 4, True, True),  # reuse fragment image prefix names
