@@ -1,12 +1,13 @@
 # Fast Jigsaw Puzzle Solver with unknown orientation
-- Fragments image into <b>N</b> (row x col) slices of random orientations</br>
-- Re-assemble <b>N</b> image fragments back to original image in <b>O(N<sup>2</sup>)</b> time complexity</br>
+- Divides image into <b>N</b> (row x col) pieces and jumbles them into 8 random orientations.</br>
+- Reconstructs <b>N</b> puzzle pieces back to the original image in <b>O(N<sup>2</sup>)</b> runtime.</br>
 ![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver_2.gif)</br>
-<i>Disclaimer: orientation of the resulting image is random. Successful reconstruction is not guaranteed.</i>
+<i>Disclaimer: orientation of the reconstructed image is random. Successful reconstruction is not always guaranteed.</i>
 
 ### Features
-  - <b>Parallel</b> distance matrix computation (plain euclidean distance metric)<br>
-  - Prim's <b>Minimum Spanning Tree</b> algorithm with Linked-Hashmap implementation of Priority Queue<br>
+  - Euclidean distance metric to evaluate the compatibility of two puzzle pieces (at their respective image boundaries where they are stitched together).
+  - 3D distance matrix computation in <b>Parallel</b> <br>
+  - Prim's <b>Minimum Spanning Tree</b> algorithm with Linked-Hashmap implementation of the Priority Queue<br>
 
 
 ### Dependencies
@@ -21,37 +22,28 @@ pip install -r requirements.txt
 bash demo.sh
 ```  
 
-#### fragment_image.py: slice and randomly transform image
+#### create_jigsaw_pieces.py: read and slice image into equal-sized jigsaw pieces and apply random set of transformations.
 ```bash
-fragment_image.py [OPTION] ${image_file_name} ${x_slice} ${y_slice} ${out_prefix}
+create_jigsaw_pieces.py [OPTION] ${image_file_name} ${x_slice} ${y_slice} ${out_prefix}
 ```
 -v: *increase verbosity*</br>
 <img src="https://hj2choi.github.io/images/external/cut_image.png" width="300" title="fragment image">
 </br>
 
-#### assemble_fragments.py: re-assemble image fragments back to original image
+#### solve_puzzle.py: reconstruct puzzle pieces back to original image
 ```bash
-assemble_images.py [OPTION] ${in_prefix}
+solve_puzzle.py [OPTION] ${in_prefix}
 ```
 -v: *increase verbosity*<br/>
 -a: *show animation*<br/>
 -t: *show minimum spanning tree on top of the animation*<br/>
 <img src="https://hj2choi.github.io/images/external/merge_image.png" width="300" title="merge image">
 
-## config.ini
-| Key | Description                                                | Default          |
-| :--- |------------------------------------------------------------|------------------|
-| `fragments_dir` | directory to save fragmented images                        | image_fragments/ |
-| `output_dir` | directory to save final merged image                       | images_out/      |
-| `debug` | enable logging                                             | False            |
-| `show_assembly_animation` | show assembly animation after the process is complete      | True             |
-| `animation_interval_millis` | milliseconds interval between each merge step in animation | 200              |
-
-## image assembly algorithm (adapted Prim's Minimum Spanning Tree)
+## image reconstruction algorithm
 ```
-I[i,t]: all image fragments (image, transformation)
-S[i,j,t]: all-pairs image similarity-matrix
-G[y,x]: image cell-block
+I[i,t]: all puzzle pieces (image, transformation)
+S[i,j,t]: all-pairs puzzle piece similarity-matrix
+G[y,x]: puzzle block
 Q: priority queue
 
 1 initialize S with similarity metric
@@ -69,22 +61,22 @@ Q: priority queue
 ```
 
 ## Time complexity analysis
-<b>N</b>: number of images</br>
-<b>C</b>: total cache miss (number of duplicate images to be removed from queue)</br>
+<b>N</b>: number of images (puzzle pieces)</br>
+<b>C</b>: total cache miss (number of duplicate puzzle pieces to be removed from queue)</br>
 in all cases, <b>C = O(N)</b></br>
 
-| Operations \ Algorithms | brute-force<br><br><br> | brute-force</br><sub><sup><i>index mapping</i></br><i>hashmap</i></sub></sup> | Prim's MST</br><sub><sup><i>max-heap</i></sub></sup><br><br> | Prim's MST</br><sub><sup><i>linked-hashmap</i></sub></sup></br><sub><sup><i>matrix symmetry</i></sub></sup> |
-| :---------------------------- | :---: | :---: | :---: | :---: |
+| Operations \ Algorithms       | brute-force<br><br><br> | brute-force</br><sub><sup><i>index mapping</i></br><i>hashmap</i></sub></sup> | Prim's MST</br><sub><sup><i>max-heap</i></sub></sup><br><br> | Prim's MST</br><sub><sup><i>linked-hashmap</i></sub></sup></br><sub><sup><i>matrix symmetry</i></sub></sup> |
+|:------------------------------| :---: | :---: | :---: | :---: |
 | <i>similarity matrix</i>      | <i>O(256N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i><b>O(16N<sup>2</sup>)</b></i> |
-| traverse all images           | O(N) | O(N) | O(N) | O(N) |
+| traverse all puzzle pieces    | O(N) | O(N) | O(N) | O(N) |
 | traverse all positions        | O(4N) | O(4N) | - | - |
 | argmax(img at pos(x,y))       | O(256N) | O(32N) | O(32N) | O(32N) |
-| validate cellblock shape      | O(4N) | O(1) | O(1) | O(1) |
+| validate puzzle-block shape   | O(4N) | O(1) | O(1) | O(1) |
 | <i>(PQueue)</i> remove by ID  | - | O(C) | O(ClogN) | <b>O(C)</b> |
 | <i>(PQueue)</i> extract_min() | - | - | O(1) | <b>O(1)</b> |
 | <i>(PQueue)</i> enqueue       | - | - | <b>O(logN)</b> | O(N) |
-| <b>Total time complexity</b> | <i>O(256N<sup>2</sup>)</i></br>+O(4096N<sup>4</sup>) | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(128N<sup>3</sup>) | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(3CNlog(N))</br> | <i>O(16N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(N(C+N)) |
-| <b>=</b>  | O(N<sup>4</sup>) | O(N<sup>3</sup>) | O(N<sup>2</sup>log(N)) | <b>O(N<sup>2</sup>)</b> |
+| <b>Total time complexity</b>  | <i>O(256N<sup>2</sup>)</i></br>+O(4096N<sup>4</sup>) | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(128N<sup>3</sup>) | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(3CNlog(N))</br> | <i>O(16N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(N(C+N)) |
+| <b>=</b>                      | O(N<sup>4</sup>) | O(N<sup>3</sup>) | O(N<sup>2</sup>log(N)) | <b>O(N<sup>2</sup>)</b> |
 
 ### references
 http://chenlab.ece.cornell.edu/people/Andy/publications/Andy_files/Gallagher_cvpr2012_puzzleAssembly.pdf</br>
