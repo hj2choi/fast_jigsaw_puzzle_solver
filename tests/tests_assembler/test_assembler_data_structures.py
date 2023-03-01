@@ -1,5 +1,5 @@
 import unittest
-from jigsaw_puzzle_solver.assembler.assembler_data_structures import PuzzlePiece, ConstructionBlueprint, LinkedHashmapPriorityQueue
+from jigsaw_puzzle_solver.solver.assembler_data_structures import PuzzlePiece, PuzzleBlock, LinkedHashmapPriorityQueue
 
 
 class PuzzlePieceTest(unittest.TestCase):
@@ -94,7 +94,7 @@ class PuzzlePieceTest(unittest.TestCase):
 
 class BlueprintTest(unittest.TestCase):
     def setUp(self):
-        self.cellblock = ConstructionBlueprint(3, 4)
+        self.cellblock = PuzzleBlock(3, 4)
 
     def tearDown(self):
         return

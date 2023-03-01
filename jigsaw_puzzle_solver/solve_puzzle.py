@@ -1,12 +1,9 @@
-""" assemble_images.py
-Prerequisite: fragmented images (via fragment_image.py)
-This script takes in in_prefix, cols and rows and out_prefix.
-
-Reads all fragmented images with filename starting with $in_prefix
-and reconstructs them back to original image.
+""" solve_puzzle.py
+This script reads all puzzle pieces with filenames starting with $in_prefix
+and reconstructs them back to the original image.
 
 e.g)
-python assemble_images.py test_fragments 3 2 test_out
+python solve_puzzle.py test_fragments
 """
 
 import os
@@ -15,11 +12,11 @@ import time
 from argparse import ArgumentParser
 from configparser import ConfigParser
 
-from assembler import assembler as asm
+from solver import assembler as asm
 
 DEFAULT_CONFIG = {
     "config": {
-        "fragments_dir": "image_fragments",
+        "pieces_dir": "image_pieces",
         "output_dir": "images_out",
         "debug": False,
         "show_assembly_animation": True,
@@ -28,14 +25,14 @@ DEFAULT_CONFIG = {
 }
 
 
-def main(imgs_prefix, cols=0, rows=0, imgs_dir="image_fragments", out_dir="images_out", verbose=False,
+def main(imgs_prefix, cols=0, rows=0, jigsaw_pieces_dir="image_fragments", out_dir="images_out", verbose=False,
          show_anim=True, anim_interval=200, show_mst_on_anim=False):
     """
     main jigsaw puzzle solver routine.
     """
     s_time = time.time()
     # initialize
-    assembler = asm.ImageAssembler.load_from_filepath(imgs_dir, imgs_prefix, cols, rows)
+    assembler = asm.ImageAssembler.load_from_filepath(jigsaw_pieces_dir, imgs_prefix, cols, rows)
     print("assemble_image.py:", len(assembler.raw_imgs), "files loaded", flush=True)
     if not verbose:
         sys.stdout = open(os.devnull, 'w')  # block stdout
@@ -72,7 +69,7 @@ if __name__ == '__main__':
     cp.read_dict(DEFAULT_CONFIG)
     cp.read(args.config_file)
 
-    main(args.img_prefix, args.cols, args.rows, cp.get("config", "fragments_dir"), cp.get("config", "output_dir"),
+    main(args.img_prefix, args.cols, args.rows, cp.get("config", "jigsaw_pieces_dir"), cp.get("config", "output_dir"),
          cp.getboolean("config", "debug") or args.verbose,
          cp.getboolean("config", "show_assembly_animation") or args.show_animation,
          int(cp.get("config", "animation_interval_millis")), args.show_spanning_tree

@@ -1,5 +1,5 @@
 """assembler_data_structures.py
-helper data structures for assembler.py
+data structures for assembler.py
 
 CellData: representation of image cell including id, orientation and x,y position
 CellBlock: blueprint for image assembly.
@@ -23,22 +23,20 @@ class PuzzlePiece:
     Representation of each puzzle pieces. holds id, orientation state, position information.
 
     Attributes:
-        img_id (int): unique id
-        orientation (int): orientation state (flip, rotate)
-                        [0~3] for square piece (x_flip & y_flip),
-                        [0~7] for rectangular piece (rotation90 & x_flip & y_flip)
-        score (float): similarity score of which this piece was stitched to the reconstructed image
-        x (int): x position inside the ConstructionBlueprint
-        y (int): y position inside the ConstructionBlueprint
-        dir (int): stitching direction [0~3], ('d', 'u', 'r', 'l')
+        img_id (int): Unique id of the puzzle piece
+        orientation (int): Orientation state of the puzzle piece (0-3 for square pieces, 0-7 for rectangular pieces)
+        score (float): Similarity score of which this piece was stitched to the reconstructed image
+        x (int): x position of the puzzle piece inside the construction blueprint
+        y (int): y position of the puzzle piece inside the construction blueprint
+        direction (int): Stitching direction (0-3 for 'd', 'u', 'r', 'l')
 
     Methods:
-        deepcopy(PuzzlePiece) -> PuzzlePiece
-        __lt__(other: PuzzlePiece) -> bool: overrides compare operator, compares similarity score
-        tostring() -> str
-        set(id: int, transform: int, score: float, y: int, x: int, dir: int)
-        is_valid() -> bool
-        pos() -> y, x
+        deepcopy(PuzzlePiece) -> PuzzlePiece: Returns a deepcopy of the puzzle piece
+        __lt__(other: PuzzlePiece) -> bool: Overrides the less-than operator to compare similarity score
+        tostring() -> str: Returns a string representation of the puzzle piece
+        set(id: int, orientation: int, score: float, y: int, x: int, direction: int)
+        is_valid() -> bool: Returns True if the puzzle piece represents an image, False if it only acts as a placeholder
+        pos() -> Tuple[int, int]: Returns the position of the puzzle piece inside the construction blueprint
     """
 
     def __init__(self, img_id=-1, orientation=-1, score=-float("inf"), y=-1, x=-1, direction=-1):
@@ -65,7 +63,7 @@ class PuzzlePiece:
 
     def tostring(self):
         """
-        represent full instance state in string.
+        Returns a string representation of the puzzle piece
         """
         return ("{id: " + str(self.img_id) + ", t: " + str(self.orientation) +
                 ", pos: (" + str(self.y) + ", " + str(self.x) + "), dir:" + str(self.dir) +
@@ -73,7 +71,7 @@ class PuzzlePiece:
 
     def set(self, img_id=-1, orientation=-1, score=-float("inf"), y=-1, x=-1, direction=-1):
         """
-        set selected attributes.
+        Sets the attributes of the puzzle piece
         """
         if img_id != -1:
             self.img_id = img_id
@@ -91,7 +89,6 @@ class PuzzlePiece:
         """
         returns True if this Cell represents image,
         False if it only acts as a placeholder.
-        (to be used within CellBlock)
         """
         return self.img_id >= 0
 
@@ -102,43 +99,53 @@ class PuzzlePiece:
         return self.y, self.x
 
 
-class ConstructionBlueprint:
+class PuzzleBlock:
     """
-    Blueprint for image reconstruction.
-    Holds 2d array of PuzzlePiece, all initialized with a blank image piece.
+    Blueprint for assembling a jigsaw puzzle image.
+    Holds 2d array of PuzzlePiece objects, each initialized with a blank image piece.
 
-    position is "inactive" if it is blank, i.e: PuzzlePiece has invalid id (<0)
-    a position can be "activated" by pasting valid PuzzlePiece (via ConstructionBlueprint.activate_cell())
-    A puzzle piece must be placed next to another piece.
+    - Positions in the array are considered "inactive"
+      until they are activated by pasting a valid PuzzlePiece object via the activate_position() method.
+    - A position can only be activated if it is adjacent to another activated position,
+      and if the resulting assembly of activated positions does not exceed
+      the maximum allowed size specified by max_h and max_w.
 
     Attributes:
-        max_h (int): max allowed number of rows in assembled image
-        max_w (int): max allowed number of columns in assembled image
-        data (2d list of PuzzlePiece):
+        max_h (int): maximum allowed number of rows in the assembled image
+        max_w (int): maximum allowed number of columns in the assembled image
+        data (2d list of PuzzlePiece objects): the 2D array holding the PuzzlePiece objects
+        bottom, top, left, right (int): the current boundaries of the activated positions in the array
 
     Methods:
-        get_active_neighbors(y: int, x: int) -> list of PuzzlePiece
-        get_inactive_neighbors(y: int, x: int) -> list of PuzzlePiece
-        validate_position(y: int, x: int) -> bool
-        activate_position(piece: PuzzlePiece)
-        block_size() -> height, width
+        get_active_neighbors(y: int, x: int) -> list of PuzzlePiece: returns all neighboring active PuzzlePiece objects
+        get_inactive_neighbors(y: int, x: int) -> list of PuzzlePiece: returns all neighboring inactive PuzzlePiece objects
+        validate_position(y: int, x: int) -> bool: checks if position y, x can be activated
+        activate_position(piece: PuzzlePiece): activates position y, x by pasting PuzzlePiece object at y, x
+        block_size() -> height, width: returns the current blueprint size of activated positions
     """
 
     def __init__(self, max_h, max_w):
-        self._init = True
-        self.max_h, self.max_w = max_h, max_w  # max allowed height and width
-        w_h_size = max(max_h, max_w) * 2  # allocated width & height of data (2d list of CellData)
-        # 2D array of puzzle pieces.
+        self._init = True  # flag indicating whether this is the first PuzzlePiece to be added
+        self.max_h, self.max_w = max_h, max_w  # maximum allowed height and width
+        w_h_size = max(max_h, max_w) * 2  # allocated width and height of data array
+        # allocate 2D array of PuzzlePiece objects
         self.data = np.array([[PuzzlePiece(y=i, x=j) for j in range(w_h_size)]
                               for i in range(w_h_size)])
-        self.bottom = self.top = self.left = self.right = w_h_size // 2  # initial position
+        self.bottom = self.top = self.left = self.right = w_h_size // 2  # first position
 
     def get(self, y, x):
         return self.data[y][x]
 
     def get_active_neighbors(self, y, x):
         """
-        returns all neighboring active pieces
+        Returns a list of neighboring active PuzzlePiece objects.
+
+        Args:
+            y (int): the y-coordinate of the position
+            x (int): the x-coordinate of the position
+
+        Returns:
+            List[PuzzlePiece]: a list of neighboring active PuzzlePiece objects
         """
         adj = []
         for dirc in DIR_ENUM.values():
@@ -149,7 +156,7 @@ class ConstructionBlueprint:
 
     def get_inactive_neighbors(self, y, x):
         """
-        returns all neighboring inactive pieces
+        Returns a list of neighboring inactive PuzzlePiece objects.
         """
         adj = []
         for dirc in DIR_ENUM.values():
@@ -161,21 +168,24 @@ class ConstructionBlueprint:
 
     def validate_position(self, y, x):
         """
-        check if position y, x can be activated (puzzle piece can be pasted at y, x)
+        check if the given position y, x can be activated (i.e., a puzzle piece can be placed there).
+        A position is valid if it is not already occupied and has at least one adjacent activated position.
         """
         if (not self.data[y][x].is_valid() and self.get_active_neighbors(y, x)) or self._init:
+            # Calculate the updated block size if this position is activated.
             updated_h, updated_w = self.top - self.bottom, self.right - self.left
             if y < self.bottom or self.top < y:
                 updated_h += 1
             if x < self.left or self.right < x:
                 updated_w += 1
+            # Check if the updated block size is within the maximum dimensions.
             return ((updated_h < self.max_h and updated_w < self.max_w) or
                     (updated_h < self.max_w and updated_w < self.max_h))
         return False
 
     def activate_position(self, piece):
         """
-        activate position y, x (paste puzzle piece at y, x)
+        Activate the given puzzle piece by placing it in the corresponding position in the block.
         NOTE: the first piece MUST be pasted at y, x = w_h_size/2, w_h_size/2
 
         @Parameters
@@ -184,6 +194,8 @@ class ConstructionBlueprint:
 
         self._init = False
         self.data[piece.y][piece.x] = piece
+
+        # Update the block boundaries based on the position of the newly activated piece.
         if piece.y > self.top:
             self.top += 1
         if piece.y < self.bottom:
@@ -195,7 +207,7 @@ class ConstructionBlueprint:
 
     def block_size(self):
         """
-        returns current blueprint size of activated positions.
+        Returns the current dimensions of the block that contains activated positions.
         """
         return self.top - self.bottom + 1, self.right - self.left + 1
 
@@ -208,7 +220,7 @@ class LinkedHashmapPriorityQueue:
                         max-heap vs linked-hashmap
     enqueue()           O(logN)     O(N)
     dequeue()           O(logN)     O(1)
-    search_by_key()       O(N)        O(1)
+    search_by_key()     O(N)        O(1)
 
     Attributes:
         hashmap (dict)

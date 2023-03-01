@@ -16,10 +16,10 @@ import numpy as np
 import pytest
 import cv2
 
-from jigsaw_puzzle_solver import fragment_image, assemble_images
-from jigsaw_puzzle_solver.assembler import assembler as asm
+from jigsaw_puzzle_solver import create_jigsaw_pieces, solve_puzzle
+from jigsaw_puzzle_solver.solver import assembler as asm
 
-TESTS_FRAGMENTS_DIR = os.path.join("tests", "temp_fragments")
+TESTS_PIECES_DIR = os.path.join("tests", "temp_pieces")
 TESTS_OUTPUT_DIR = os.path.join("tests", "temp_out")
 
 
@@ -48,7 +48,7 @@ def setup():
 
 
 def teardown():
-    shutil.rmtree(TESTS_FRAGMENTS_DIR)
+    shutil.rmtree(TESTS_PIECES_DIR)
     shutil.rmtree(TESTS_OUTPUT_DIR)
 
 
@@ -67,9 +67,9 @@ def teardown():
 ])
 def test_integrated_correct_cases(mock_imshow, img_path, prefix, cols, rows, anim, anim_mst):
     # integrated test, check for successful reconstruction
-    fragment_image.main(img_path, cols, rows, prefix,
-                        verbose=True, fragments_dir=TESTS_FRAGMENTS_DIR)
-    assemble_images.main(prefix, imgs_dir=TESTS_FRAGMENTS_DIR, out_dir=TESTS_OUTPUT_DIR,
+    create_jigsaw_pieces.main(img_path, cols, rows, prefix,
+                        verbose=True, jigsaw_pieces_dir=TESTS_PIECES_DIR)
+    solve_puzzle.main(prefix, 0, 0, jigsaw_pieces_dir=TESTS_PIECES_DIR, out_dir=TESTS_OUTPUT_DIR,
                          verbose=True, show_anim=anim, anim_interval=1, show_mst_on_anim=anim_mst)
     assert validate_reconstructed_img(cv2.imread(img_path),
                                       cv2.imread(os.path.join(TESTS_OUTPUT_DIR, prefix+".png")))
@@ -82,9 +82,9 @@ def test_integrated_correct_cases(mock_imshow, img_path, prefix, cols, rows, ani
 ])
 def test_integrated_incorrect_cases(mock_imshow, img_path, prefix, cols, rows):
     # integrated test, only check for safe program exit
-    fragment_image.main(img_path, cols, rows, prefix,
-                        verbose=True, fragments_dir=TESTS_FRAGMENTS_DIR)
-    assemble_images.main(prefix, imgs_dir=TESTS_FRAGMENTS_DIR, out_dir=TESTS_OUTPUT_DIR,
+    create_jigsaw_pieces.main(img_path, cols, rows, prefix,
+                        verbose=True, jigsaw_pieces_dir=TESTS_PIECES_DIR)
+    solve_puzzle.main(prefix, 0, 0, jigsaw_pieces_dir=TESTS_PIECES_DIR, out_dir=TESTS_OUTPUT_DIR,
                          verbose=True, show_anim=True, anim_interval=1, show_mst_on_anim=True)
     # an assert statement is deliberately omitted here
 
