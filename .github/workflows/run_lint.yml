@@ -5,9 +5,9 @@ name: flake8 lint
 
 on:
   push:
-    branches: [ "main", "feature", "tests" ]
+    branches: [ "main", "feat", "tests" ]
   pull_request:
-    branches: [ "main", "feature", "tests"]
+    branches: [ "main", "feat", "tests"]
 
 permissions:
   contents: read
