@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Jigsaw Puzzle Solver</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+        <style>
+            .container {
+                display: flex;
+                flex-wrap: wrap;
+                #align-items: center;
+                #justify-content: center;
+                position: relative;
+                margin: 40px 200px;
+            }
+            .piece {
+                margin: 5px;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid black;
+                box-shadow: 0 0 3px black;
+                opacity: 0;
+                animation: fadeIn 1s ease-out;
+                animation-fill-mode: forwards;
+            }
+            @keyframes fadeIn {
+                to {
+                    opacity: 1;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Jigsaw Puzzle Solver</h1>
+        <input type="number" id="rows" placeholder="Rows">
+        <input type="number" id="cols" placeholder="Columns">
+        <input type="file" id="file" accept="image/*">
+        <button onclick="splitImage()">Split</button>
+        <div class="container">
+            <img id="originalImage">
+        </div>
+        <script>
+            function removeAllPieces() {
+                // Remove all previously splitted image pieces
+                let prev_pieces = document.querySelectorAll(".container .piece");
+                for (let i = 0; i < prev_pieces.length; i++) {
+                    prev_pieces[i].parentNode.removeChild(prev_pieces[i]);
+                }
+            }
+
+
+            const container = document.querySelector('.container');
+            const fileInput = document.getElementById('file');
+            const originalImage = document.getElementById('originalImage');
+            originalImage.style.display = 'none';
+            //document.body.appendChild(imgElement);
+
+            fileInput.onclick = function() {
+                console.log("fileInput.onclick()")
+            };
+
+            fileInput.onchange = function() {
+                console.log("fileInput.onchange()")
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function (event) {
+                    originalImage.src = event.target.result;
+                    originalImage.style.display = 'block';
+                };
+                removeAllPieces();
+            };
+
+            function splitImage() {
+                console.log("splitImage()")
+
+                const rows = parseInt(document.getElementById('rows').value);
+                const cols = parseInt(document.getElementById('cols').value);
+                if (isNaN(rows) || isNaN(cols)) {
+                    alert('Please enter valid rows and columns values');
+                    return;
+                }
+
+                const file = fileInput.files[0];
+                if (!file) {
+                    alert('Please choose an image file');
+                    return;
+                }
+
+                removeAllPieces();
+
+                const img = new Image();
+                img.src = originalImage.src;
+                img.onload = function () {
+                    console.log("img.onload()")
+                    const pieceWidth = img.width / cols;
+                    const pieceHeight = img.height / rows;
+                    const gridMaxWidth = 1200;
+                    const gridCellMargin = 10;
+                    const gridCellLength = Math.max(pieceWidth, pieceHeight); // in pixels
+                    const gridRowElementsMax = Math.floor(gridMaxWidth / (gridCellLength + gridCellMargin)) // count
+                    const gridRowElements = Math.min(gridRowElementsMax, Math.ceil(rows * cols / Math.ceil(Math.sqrt(rows * cols / gridRowElementsMax))));
+
+                    // Create the array with values from 0 to rows*cols-1
+                    const ShuffledPieceIndices = Array.from({ length: rows * cols }, (_, index) => index);
+                    console.log(ShuffledPieceIndices)
+                    // Apply Fisher-Yates shuffle algorithm
+                    for (let i = ShuffledPieceIndices.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [ShuffledPieceIndices[i], ShuffledPieceIndices[j]] = [ShuffledPieceIndices[j], ShuffledPieceIndices[i]];
+                    }
+                    console.log(ShuffledPieceIndices)
+
+                    for (let i = 0; i < rows; i++) {
+                        for (let j = 0; j < cols; j++) {
+                            // create jigsaw puzzle piece
+                            const piece = document.createElement('div');
+                            piece.classList.add('piece');
+                            piece.style.width = `${pieceWidth}px`;
+                            piece.style.height = `${pieceHeight}px`;
+                            piece.style.backgroundImage = `url(${img.src})`;
+                            piece.style.backgroundPosition = `-${j * pieceWidth}px -${i * pieceHeight}px`;
+                            piece.style.position = "absolute";
+                            piece.style.top = "0";
+                            piece.style.left = "0";
+                            piece.style.transform = `translate(${j * pieceWidth}px, ${i * pieceHeight}px)`;
+                            container.appendChild(piece);
+
+                            // randomly transform(rotate, flip) each pieces
+                            const delay = 0;//anime.random(0, 500);
+                            const duration = 1000;//anime.random(1000, 1500);
+                            const startX = piece.getBoundingClientRect().left - piece.offsetParent.offsetLeft;
+                            const startY = piece.getBoundingClientRect().top - piece.offsetParent.offsetTop;
+                            const xFlip = anime.random(0, 1) ? true : false;
+                            const yFlip = anime.random(0, 1) ? true : false;
+                            const rotate = anime.random(0, 1) ? 90 : 0;
+
+                            piecePosIdx = ShuffledPieceIndices[i * cols + j]
+                            console.log(piecePosIdx)
+                            const targetXPos = (piecePosIdx % gridRowElements) * (gridCellLength + gridCellMargin);
+                            const targetYPos = 500 + Math.floor(piecePosIdx / gridRowElements) * (gridCellLength + gridCellMargin);
+                            const deltaX = targetXPos - startX;
+                            const deltaY = targetYPos - startY;
+                            //console.log("piece");
+                            //console.log(startX + " " + startY);
+                            //console.log(targetXPos + " " + targetYPos);
+                            //console.log(deltaX + " " + deltaY);
+
+                            anime({
+                                targets: piece,
+                                translateX: deltaX,
+                                translateY: deltaY,
+                                rotate: rotate,
+                                scaleX: xFlip ? -1 : 1,
+                                scaleY: yFlip ? -1 : 1,
+                                opacity: 1,
+                                duration: duration,
+                                delay: delay,
+                                easing: 'easeInOutQuad'
+                            });
+                        }
+                    }
+                    originalImage.style.display = 'none';
+                }
+            }
+        </script>
+    </body>
+</html>
