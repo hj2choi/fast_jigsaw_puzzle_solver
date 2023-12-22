@@ -2,11 +2,11 @@
 - Divides image into <b>N</b> (row x col) pieces and jumbles them into 8 random orientations.</br>
 - Reconstructs <b>N</b> puzzle pieces back to the original image in <b>O(N<sup>2</sup>)</b> runtime.</br>
 ![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver_2.gif)</br>
-<i>Disclaimer: orientation of the reconstructed image is random. Successful reconstruction is not always guaranteed.</i>
+<i>Disclaimer: orientation of the final image is random. Successful reconstruction is not always guaranteed.</i>
 
 ### Features
-  - Euclidean distance metric to evaluate the compatibility of two puzzle pieces (at their respective image boundaries where they are stitched together).
-  - 3D distance matrix computation in <b>Parallel</b> <br>
+  - Euclidean distance metric for image boundary matching
+  - <b>Parallel</b> 3D distance matrix (img x img x orientation) computation  <br>
   - Prim's <b>Minimum Spanning Tree</b> algorithm with Linked-Hashmap implementation of the Priority Queue<br>
 
 
