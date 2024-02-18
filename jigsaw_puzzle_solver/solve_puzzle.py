@@ -25,8 +25,9 @@ DEFAULT_CONFIG = {
 }
 
 
-def main(imgs_prefix, cols=0, rows=0, jigsaw_pieces_dir="image_fragments", out_dir="images_out", verbose=False,
-         show_anim=True, anim_interval=200, show_mst_on_anim=False):
+def main(imgs_prefix: str, cols: int = 0, rows: int = 0, jigsaw_pieces_dir: str = "image_fragments", 
+         out_dir: str = "images_out", verbose: bool = False, show_anim: bool = True, 
+         anim_interval: int = 200, show_mst_on_anim: bool = False) -> None:
     """
     main jigsaw puzzle solver routine.
     """

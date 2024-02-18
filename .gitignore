@@ -147,7 +147,7 @@ cython_debug/
 
 # Directory for output files
 images_out/
-image_fragments/
+jigsaw_pieces/
 
 # test shell scripts
 test.sh

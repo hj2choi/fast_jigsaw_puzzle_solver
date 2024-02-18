@@ -16,6 +16,7 @@ import sys
 import time
 from argparse import ArgumentParser
 from configparser import ConfigParser
+from typing import Tuple
 
 import cv2
 import numpy as np
@@ -29,7 +30,7 @@ DEFAULT_CONFIG = {
 RANDOM_SEED = 32  # for reproducibility
 
 
-def rand_flip_horizontal(img):
+def rand_flip_horizontal(img: np.ndarray) -> np.ndarray:
     """
     flips image horizontally with 50% chance.
     """
@@ -39,7 +40,7 @@ def rand_flip_horizontal(img):
     return img
 
 
-def rand_flip_vertical(img):
+def rand_flip_vertical(img: np.ndarray) -> np.ndarray:
     """
     flips image vertically with 50% chance.
     """
@@ -49,7 +50,7 @@ def rand_flip_vertical(img):
     return img
 
 
-def rand_rotate90(img, clockwise=False):
+def rand_rotate90(img: np.ndarray, clockwise: bool = False) -> np.ndarray:
     """
     rotates image 90 degrees with 50% chance.
     """
@@ -59,7 +60,7 @@ def rand_rotate90(img, clockwise=False):
     return img
 
 
-def jumble_jigsaw_piece(img, file_prefix, sequence_no):
+def jumble_jigsaw_piece(img: np.ndarray, file_prefix: str, sequence_no: int) -> None:
     """
     Applies random transformations to a given image piece and saves it to a random unique filename with given prefix.
 
@@ -75,8 +76,8 @@ def jumble_jigsaw_piece(img, file_prefix, sequence_no):
     print("")
 
 
-def main(img_path, num_cols, num_rows, jigsaw_piece_prefix,
-         verbose=False, jigsaw_pieces_dir="jigsaw_pieces"):
+def main(img_path: str, num_cols: int, num_rows: int, jigsaw_piece_prefix: str,
+         verbose: bool = False, jigsaw_pieces_dir: str = "jigsaw_pieces") -> None:
     """
     1. read and slice image into equal-sized jigsaw pieces as specified in args
     2. for each jigsaw piece: apply random set of transformations.
