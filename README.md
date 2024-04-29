@@ -2,11 +2,11 @@
 - Divides image into <b>N</b> (row x col) pieces and jumbles them into 8 random orientations.</br>
 - Reconstructs <b>N</b> puzzle pieces back to the original image in <b>O(N<sup>2</sup>)</b> runtime.</br>
 ![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver_2.gif)</br>
-<i>Disclaimer: orientation of the reconstructed image is random. Successful reconstruction is not always guaranteed.</i>
+<i>Disclaimer: orientation of the final image is random. Successful reconstruction is not always guaranteed.</i>
 
 ### Features
-  - Euclidean distance metric to evaluate the compatibility of two puzzle pieces (at their respective image boundaries where they are stitched together).
-  - 3D distance matrix computation in <b>Parallel</b> <br>
+  - Euclidean distance metric for image boundary matching
+  - <b>Parallel</b> 3D distance matrix (img x img x orientation) computation  <br>
   - Prim's <b>Minimum Spanning Tree</b> algorithm with Linked-Hashmap implementation of the Priority Queue<br>
 
 
@@ -24,20 +24,21 @@ bash demo.sh
 
 #### create_jigsaw_pieces.py: read and slice image into equal-sized jigsaw pieces and apply random set of transformations.
 ```bash
-create_jigsaw_pieces.py [OPTION] ${image_file_name} ${x_slice} ${y_slice} ${out_prefix}
+create_jigsaw_pieces.py [OPTION] ${image_filename} ${x_slice} ${y_slice} ${keystring}
 ```
 -v: *increase verbosity*</br>
-<img src="https://hj2choi.github.io/images/external/cut_image.png" width="300" title="fragment image">
+<img src="https://hj2choi.github.io/images/external/fragmentation_demo.JPG" width="560" title="image fragmentation visual demo">
 </br>
 
 #### solve_puzzle.py: reconstruct puzzle pieces back to original image
 ```bash
-solve_puzzle.py [OPTION] ${in_prefix}
+solve_puzzle.py [OPTION] ${keystring}
 ```
 -v: *increase verbosity*<br/>
 -a: *show animation*<br/>
 -t: *show minimum spanning tree on top of the animation*<br/>
-<img src="https://hj2choi.github.io/images/external/merge_image.png" width="300" title="merge image">
+<img src="https://hj2choi.github.io/images/external/reconstruction_demo.JPG" width="560" title="reconstruction result">
+
 
 ## image reconstruction algorithm
 ```
