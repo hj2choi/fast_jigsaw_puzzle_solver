@@ -20,7 +20,8 @@ DEFAULT_CONFIG = {
         "output_dir": "images_out",
         "debug": False,
         "show_assembly_animation": True,
-        "animation_interval_millis": 200
+        "animation_interval_millis": 200,
+        "jigsaw_pieces_dir": "jigsaw_pieces"
     }
 }
 
