@@ -1,13 +1,13 @@
 # Fast Jigsaw Puzzle Solver with unknown orientation
-- Divides image into <b>N</b> (row x col) pieces and jumbles them into 8 random orientations.</br>
-- Reconstructs <b>N</b> puzzle pieces back to the original image in <b>O(N<sup>2</sup>)</b> runtime.</br>
+- Breaks down an image into <b>N</b> (row x col) rectangular puzzle pieces of 8 possible random orientations.</br>
+- Reconstructs <b>N</b> puzzle pieces back to original image in <b>O(N<sup>2</sup>)</b> runtime.</br>
 ![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver_2.gif)</br>
-<i>Disclaimer: orientation of the final image is random. Successful reconstruction is not always guaranteed.</i>
+<i>Disclaimer: orientation of the reconstructed image is random. Successful reconstruction is not always guaranteed.</i>
 
 ### Features
-  - Euclidean distance metric for image boundary matching
-  - <b>Parallel</b> 3D distance matrix (img x img x orientation) computation  <br>
   - Prim's <b>Minimum Spanning Tree</b> algorithm with Linked-Hashmap implementation of the Priority Queue<br>
+  - <b>Parallel</b> 3D distance matrix (img x img x orientation) computation  <br>
+  - Euclidean distance metric for image boundary matching
 
 
 ### Dependencies
@@ -22,7 +22,7 @@ pip install -r requirements.txt
 bash demo.sh
 ```  
 
-#### create_jigsaw_pieces.py: read and slice image into equal-sized jigsaw pieces and apply random set of transformations.
+#### create_jigsaw_pieces.py: read and slice image into rectangular jigsaw pieces and apply random set of transformations
 ```bash
 create_jigsaw_pieces.py [OPTION] ${image_filename} ${x_slice} ${y_slice} ${keystring}
 ```
@@ -30,13 +30,13 @@ create_jigsaw_pieces.py [OPTION] ${image_filename} ${x_slice} ${y_slice} ${keyst
 <img src="https://hj2choi.github.io/images/external/fragmentation_demo.JPG" width="560" title="image fragmentation visual demo">
 </br>
 
-#### solve_puzzle.py: reconstruct puzzle pieces back to original image
+#### solve_puzzle.py: reconstruct original image by putting puzzle pieces together
 ```bash
 solve_puzzle.py [OPTION] ${keystring}
 ```
 -v: *increase verbosity*<br/>
 -a: *show animation*<br/>
--t: *show minimum spanning tree on top of the animation*<br/>
+-t: *show minimum spanning tree on top*<br/>
 <img src="https://hj2choi.github.io/images/external/reconstruction_demo.JPG" width="560" title="reconstruction result">
 
 
@@ -63,7 +63,7 @@ Q: priority queue
 
 ## Time complexity analysis
 <b>N</b>: number of images (puzzle pieces)</br>
-<b>C</b>: total cache miss (number of duplicate puzzle pieces to be removed from queue)</br>
+<b>C</b>: total cache miss (total number of duplicate puzzle pieces to be removed from the queue)</br>
 in all cases, <b>C = O(N)</b></br>
 
 | Operations \ Algorithms       | brute-force<br><br><br> | brute-force</br><sub><sup><i>index mapping</i></br><i>hashmap</i></sub></sup> | Prim's MST</br><sub><sup><i>max-heap</i></sub></sup><br><br> | Prim's MST</br><sub><sup><i>linked-hashmap</i></sub></sup></br><sub><sup><i>matrix symmetry</i></sub></sup> |
