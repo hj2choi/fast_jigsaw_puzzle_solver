@@ -1,5 +1,5 @@
 # Fast Jigsaw Puzzle Solver with unknown orientation
-- Breaks down an origin image into <b>N</b> (row x col) anonymized rectangular pieces of 8 possible random orientations.</br>
+- Breaks down an original image into <b>N</b> (row x col) anonymized rectangular pieces of random orientations.</br>
 - Reconstructs <b>N</b> puzzle pieces back to original image in <b>O(N<sup>2</sup>)</b> runtime.</br>
 ![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver_2.gif)</br>
 <i>Disclaimer: orientation of the reconstructed image is random. Successful reconstruction is not always guaranteed.</i>
