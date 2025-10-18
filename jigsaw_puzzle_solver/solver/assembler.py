@@ -116,31 +116,7 @@ class ImageAssembler:
         Returns:
             None
         """
-
-        # initialization.
-        self._compute_similarity_matrix()
-        s_time = time.time()
-        self.merge_history = []
-        unused_ids = [*range(0, len(self.raw_imgs))]  # remaining pieces
-        self.blueprint = PuzzleBlock(self.max_rows if self.max_rows > 0 else len(self.raw_imgs),
-                                     self.max_cols if self.max_cols > 0 else len(self.raw_imgs))
-        p_queue = LinkedHashmapPriorityQueue(len(self.raw_imgs))
-
-        # add the first puzzle piece to the priority queue
-        p_queue.enqueue(0, PuzzlePiece(0, 0, 1.0, self.blueprint.top, self.blueprint.left))
-
-        # MST assembly algorithm loop
-        while not p_queue.is_empty():
-            # do not consider a position that's already activated by the blueprint
-            if not self.blueprint.validate_position(*p_queue.peek().pos()):
-                p_queue.dequeue()
-                continue
-            # dequeue puzzle piece from the priority queue, and merge it towards the final image form.
-            piece, duplicates = _dequeue_and_merge()
-            # add the best fit puzzle pieces at all frontier positions to the priority queue
-            _enqueue_all_frontiers(self.blueprint.get_inactive_neighbors(*piece.pos()) + duplicates)
-        print("MST assembly algorithm:", time.time() - s_time, "seconds")
-
+        
         def _best_fit_piece_at(y, x):
             """
             Find the puzzle piece that can be most naturally stitched at the given position.
@@ -201,6 +177,30 @@ class ImageAssembler:
                     pc = _best_fit_piece_at(*frontier.pos())
                     if pc.is_valid():
                         p_queue.enqueue(pc.img_id, pc)
+
+        # initialization.
+        self._compute_similarity_matrix()
+        s_time = time.time()
+        self.merge_history = []
+        unused_ids = [*range(0, len(self.raw_imgs))]  # remaining pieces
+        self.blueprint = PuzzleBlock(self.max_rows if self.max_rows > 0 else len(self.raw_imgs),
+                                     self.max_cols if self.max_cols > 0 else len(self.raw_imgs))
+        p_queue = LinkedHashmapPriorityQueue(len(self.raw_imgs))
+
+        # add the first puzzle piece to the priority queue
+        p_queue.enqueue(0, PuzzlePiece(0, 0, 1.0, self.blueprint.top, self.blueprint.left))
+
+        # MST assembly algorithm loop
+        while not p_queue.is_empty():
+            # do not consider a position that's already activated by the blueprint
+            if not self.blueprint.validate_position(*p_queue.peek().pos()):
+                p_queue.dequeue()
+                continue
+            # dequeue puzzle piece from the priority queue, and merge it towards the final image form.
+            piece, duplicates = _dequeue_and_merge()
+            # add the best fit puzzle pieces at all frontier positions to the priority queue
+            _enqueue_all_frontiers(self.blueprint.get_inactive_neighbors(*piece.pos()) + duplicates)
+        print("MST assembly algorithm:", time.time() - s_time, "seconds")
 
     def save_assembled_image(self, filepath):
         """
