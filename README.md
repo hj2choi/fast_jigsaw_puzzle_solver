@@ -10,8 +10,8 @@
 ## Features
 
 - Uses the Euclidean distance metric for matching image boundaries.
-- Implements a variation of Prim's **Minimum Spanning Tree** algorithm with linked-hashmap based priority queue.
 - Computes 3D distance matrix in **Parallel** (a rank-3 tensor over image x image x orientation).
+- Implements a variation of Prim's **Minimum Spanning Tree** algorithm with linked-hashmap based priority queue.
 
 ## Dependencies
 
