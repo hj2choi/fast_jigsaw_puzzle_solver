@@ -1,55 +1,72 @@
-# Fast Jigsaw Puzzle Solver with unknown orientation
-- Breaks down an original image into <b>N</b> (row x col) anonymized rectangular pieces of random orientations.</br>
-- Reconstructs <b>N</b> puzzle pieces back to original image in <b>O(N<sup>2</sup>)</b> runtime.</br>
-![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver_2.gif)</br>
-<i>Disclaimer: orientation of the reconstructed image is random. Successful reconstruction is not always guaranteed.</i>
+# Fast Jigsaw Puzzle Solver with Unknown Orientation
 
-### Features
-  - Prim's <b>Minimum Spanning Tree</b> algorithm with Linked-Hashmap implementation of the Priority Queue<br>
-  - <b>Parallel</b> 3D distance matrix (img x img x orientation) computation  <br>
-  - Euclidean distance metric for image boundary matching
+- Splits an image into **N** (rows x columns) anonymized rectangular pieces with random orientations.
+- Reconstructs the **N** puzzle pieces back to original image in **O(N²)** time complexity.
 
+![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver_2.gif)
 
-### Dependencies
-python 3.7+  
-numpy 1.16+  
-opencv-python 4.1.2+  
+*Disclaimer: The orientation of the reconstructed image may be random. Successful reconstruction is not always guaranteed.*
 
-## Execution guide
-### Quick demo with animation
+## Features
+
+- Uses the Euclidean distance metric for matching image boundaries.
+- Implements a variation of Prim's **Minimum Spanning Tree** algorithm with linked-hashmap based priority queue.
+- Computes 3D distance matrix in **Parallel** (a rank-3 tensor over image x image x orientation).
+
+## Dependencies
+
+- python 3.7+
+- numpy 1.16+
+- opencv-python 4.1.2+
+
+## Execution Guide
+
+### Quick Demo with Animation
+
 ```bash
 pip install -r requirements.txt
 bash demo.sh
-```  
+```
 
-#### create_jigsaw_pieces.py: read and slice image into rectangular jigsaw pieces and apply random set of transformations
+### create_jigsaw_pieces.py
+
+Reads and splits the image into rectangular jigsaw pieces, applying a random set of transformations.
+
 ```bash
 create_jigsaw_pieces.py [OPTION] ${image_filename} ${x_slice} ${y_slice} ${keystring}
 ```
--v: *increase verbosity*</br>
-<img src="https://hj2choi.github.io/images/external/fragmentation_demo.JPG" width="560" title="image fragmentation visual demo">
-</br>
 
-#### solve_puzzle.py: reconstruct original image by putting puzzle pieces together
+**Options:**
+- `-v`: increase verbosity
+
+![fragmentation demo](https://hj2choi.github.io/images/external/fragmentation_demo.JPG)
+
+### solve_puzzle.py
+
+Reconstructs the original image by assembling the puzzle pieces.
+
 ```bash
 solve_puzzle.py [OPTION] ${keystring}
 ```
--v: *increase verbosity*<br/>
--a: *show animation*<br/>
--t: *show minimum spanning tree on top*<br/>
-<img src="https://hj2choi.github.io/images/external/reconstruction_demo.JPG" width="560" title="reconstruction result">
 
+**Options:**
+- `-v`: increase verbosity
+- `-a`: show animation
+- `-t`: show minimum spanning tree on top
 
-## image reconstruction algorithm
+![reconstruction demo](https://hj2choi.github.io/images/external/reconstruction_demo.JPG)
+
+## Image Reconstruction Algorithm
+
 ```
 I[i,t]: all puzzle pieces (image, transformation)
-S[i,j,t]: all-pairs puzzle piece similarity-matrix
+S[i,j,t]: all-pairs puzzle piece similarity-matrix in 3D tensor form
 G[y,x]: puzzle block
 Q: priority queue
 
 1 initialize S with similarity metric
 2 set all nodes in G as inactive
-3 root <- (im: I[0,0], pos: (0,0))
+3 root <- set the root node with any image at position (0,0) (im: I[0,0], pos: (0,0))
 4 Q.enqueue(root)
 5 while Q is not empty do
 6     v <- Q.dequeue()
@@ -61,27 +78,29 @@ Q: priority queue
 12    Q.removeAllDuplicates(v.im)
 ```
 
-## Time complexity analysis
-<b>N</b>: number of images (puzzle pieces)</br>
-<b>C</b>: total cache miss (total number of duplicate puzzle pieces to be removed from the queue)</br>
-in all cases, <b>C = O(N)</b></br>
+## Time Complexity Analysis
 
-| Operations \ Algorithms       | brute-force<br><br><br> | brute-force</br><sub><sup><i>index mapping</i></br><i>hashmap</i></sub></sup> | Prim's MST</br><sub><sup><i>max-heap</i></sub></sup><br><br> | Prim's MST</br><sub><sup><i>linked-hashmap</i></sub></sup></br><sub><sup><i>matrix symmetry</i></sub></sup> |
-|:------------------------------| :---: | :---: | :---: | :---: |
-| <i>similarity matrix</i>      | <i>O(256N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i>O(32N<sup>2</sup>) | <i><b>O(16N<sup>2</sup>)</b></i> |
-| traverse all puzzle pieces    | O(N) | O(N) | O(N) | O(N) |
-| traverse all positions        | O(4N) | O(4N) | - | - |
-| argmax(img at pos(x,y))       | O(256N) | O(32N) | O(32N) | O(32N) |
-| validate puzzle-block shape   | O(4N) | O(1) | O(1) | O(1) |
-| <i>(PQueue)</i> remove by ID  | - | O(C) | O(ClogN) | <b>O(C)</b> |
-| <i>(PQueue)</i> extract_min() | - | - | O(1) | <b>O(1)</b> |
-| <i>(PQueue)</i> enqueue       | - | - | <b>O(logN)</b> | O(N) |
-| <b>Total time complexity</b>  | <i>O(256N<sup>2</sup>)</i></br>+O(4096N<sup>4</sup>) | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(128N<sup>3</sup>) | <i>O(32N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(3CNlog(N))</br> | <i>O(16N<sup>2</sup>)</i></br>+O(32(C+N<sup>2</sup>))</br>+O(N(C+N)) |
-| <b>=</b>                      | O(N<sup>4</sup>) | O(N<sup>3</sup>) | O(N<sup>2</sup>log(N)) | <b>O(N<sup>2</sup>)</b> |
+**N**: number of images (puzzle pieces)  
+**C**: total cache miss (total number of duplicate puzzle pieces to be removed from the queue)  
+In all cases, **C = O(N)**
 
-### references
-http://chenlab.ece.cornell.edu/people/Andy/publications/Andy_files/Gallagher_cvpr2012_puzzleAssembly.pdf</br>
-http://www.bmva.org/bmvc/2016/papers/paper139/paper139.pdf</br>
-https://en.wikipedia.org/wiki/Prim%27s_algorithm</br>
-https://en.wikipedia.org/wiki/Priority_queue</br>
-https://github.com/python/cpython/blob/master/Lib/heapq.py</br>
+| Operations \ Algorithms | brute-force | brute-force<br>*(index mapping, hashmap)* | Prim's MST<br>*(max-heap)* | Prim's MST<br>*(linked-hashmap, matrix symmetry)* |
+|:------------------------|:-----------:|:-----------------------------------------:|:--------------------------:|:--------------------------------------------------:|
+| *similarity matrix* | *O(256N²)* | *O(32N²)* | *O(32N²)* | ***O(16N²)*** |
+| traverse all puzzle pieces | O(N) | O(N) | O(N) | O(N) |
+| traverse all positions | O(4N) | O(4N) | - | - |
+| argmax(img at pos(x,y)) | O(256N) | O(32N) | O(32N) | O(32N) |
+| validate puzzle-block shape | O(4N) | O(1) | O(1) | O(1) |
+| *(PQueue)* remove by ID | - | O(C) | O(C log N) | **O(C)** |
+| *(PQueue)* extract_min() | - | - | O(1) | **O(1)** |
+| *(PQueue)* enqueue | - | - | **O(log N)** | O(N) |
+| **Total time complexity** | *O(256N²)*<br>+ O(4096N⁴) | *O(32N²)*<br>+ O(32(C+N²))<br>+ O(128N³) | *O(32N²)*<br>+ O(32(C+N²))<br>+ O(3CN log N) | *O(16N²)*<br>+ O(32(C+N²))<br>+ O(N(C+N)) |
+| **=** | O(N⁴) | O(N³) | O(N² log N) | **O(N²)** |
+
+## References
+
+- http://chenlab.ece.cornell.edu/people/Andy/publications/Andy_files/Gallagher_cvpr2012_puzzleAssembly.pdf
+- http://www.bmva.org/bmvc/2016/papers/paper139/paper139.pdf
+- https://en.wikipedia.org/wiki/Prim%27s_algorithm
+- https://en.wikipedia.org/wiki/Priority_queue
+- https://github.com/python/cpython/blob/master/Lib/heapq.py
