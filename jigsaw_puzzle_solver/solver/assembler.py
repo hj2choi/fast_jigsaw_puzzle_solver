@@ -117,21 +117,22 @@ class ImageAssembler:
             None
         """
         
-        def _best_fit_piece_at(y, x):
+        def _best_fit_piece_at(y, x, unused_ids, blueprint):
             """
             Find the puzzle piece that can be most naturally stitched at the given position.
 
             Args:
                 y: int, the row position.
                 x: int, the column position.
+                unused_ids: list of int, remaining puzzle piece IDs to consider.
+                blueprint: PuzzleBlock object, current state of assembled pieces.
 
             Returns:
                 The PuzzlePiece object that is the best fit.
             """
-            nonlocal unused_ids
             best_candidate = PuzzlePiece()
             for img_id in unused_ids:  # for all remaining images
-                for adj in self.blueprint.get_active_neighbors(y, x):  # for all adjacent images
+                for adj in blueprint.get_active_neighbors(y, x):  # for all adjacent images
                     for k in range(self.orientation_cnt * adj.dir,  # for all transformations
                                    self.orientation_cnt * adj.dir + self.orientation_cnt):
                         score = self.sim_matrix[adj.img_id][img_id][self.idx_map(adj.orientation, k)]
@@ -139,18 +140,22 @@ class ImageAssembler:
                             best_candidate.set(img_id, k % self.orientation_cnt, score, y, x, adj.dir)
             return best_candidate
 
-        def _dequeue_and_merge():
+        def _dequeue_and_merge(p_queue, unused_ids, blueprint):
             """
             Dequeue the puzzle piece with the highest score from the priority queue
             and merge it into the ConstructionBlueprint object.
             Then remove all duplicate puzzle pieces from the priority queue.
 
+            Args:
+                p_queue: LinkedHashmapPriorityQueue object, queue of pieces to be merged.
+                unused_ids: list of int, remaining puzzle piece IDs (will be modified).
+                blueprint: PuzzleBlock object, current state of assembled pieces.
+
             Returns:
                 The PuzzlePiece object that was dequeued and merged.
             """
-            nonlocal p_queue, unused_ids
             piece, duplicates = p_queue.dequeue_and_remove_duplicate_ids()
-            self.blueprint.activate_position(piece)
+            blueprint.activate_position(piece)
             unused_ids.remove(piece.img_id)
             print("image merged: ", piece.tostring(), "\t",
                   len(self.raw_imgs) - len(unused_ids), "/", len(self.raw_imgs), flush=True)
@@ -158,23 +163,24 @@ class ImageAssembler:
             # print("current-blueprint:\n", blueprint.data)
             return piece, duplicates
 
-        def _enqueue_all_frontiers(frontier_pieces_list):
+        def _enqueue_all_frontiers(frontier_pieces_list, p_queue, unused_ids, blueprint):
             """
             For all next possible puzzle piece placement positions,
             find the best fit piece at each position and append them puzzle pieces to the priority queue.
 
             Args:
-                frontier_pieces_list:
-                    List of PuzzlePiece objects representing the positions of the puzzle pieces on the
+                frontier_pieces_list: List of PuzzlePiece objects representing the positions of the puzzle pieces on the
                     frontier of the ConstructionBlueprint.
+                p_queue: LinkedHashmapPriorityQueue object, queue of pieces to be merged.
+                unused_ids: list of int, remaining puzzle piece IDs to consider.
+                blueprint: PuzzleBlock object, current state of assembled pieces.
 
             Returns:
                 None
             """
-            nonlocal p_queue
             for frontier in frontier_pieces_list:
-                if self.blueprint.validate_position(*frontier.pos()):
-                    pc = _best_fit_piece_at(*frontier.pos())
+                if blueprint.validate_position(*frontier.pos()):
+                    pc = _best_fit_piece_at(*frontier.pos(), unused_ids, blueprint)
                     if pc.is_valid():
                         p_queue.enqueue(pc.img_id, pc)
 
@@ -197,9 +203,10 @@ class ImageAssembler:
                 p_queue.dequeue()
                 continue
             # dequeue puzzle piece from the priority queue, and merge it towards the final image form.
-            piece, duplicates = _dequeue_and_merge()
+            piece, duplicates = _dequeue_and_merge(p_queue, unused_ids, self.blueprint)
             # add the best fit puzzle pieces at all frontier positions to the priority queue
-            _enqueue_all_frontiers(self.blueprint.get_inactive_neighbors(*piece.pos()) + duplicates)
+            _enqueue_all_frontiers(self.blueprint.get_inactive_neighbors(*piece.pos()) + duplicates, 
+                                 p_queue, unused_ids, self.blueprint)
         print("MST assembly algorithm:", time.time() - s_time, "seconds")
 
     def save_assembled_image(self, filepath):
@@ -318,7 +325,6 @@ class ImageAssembler:
         """
             Compute similarity between two images for a specific combination of orientations and stitching directions.
         """
-        global RAW_IMGS_NORM, ORIENTATION_CNT
         i, j, k = x[0][0], x[0][1], x[0][2]
         # only compute for the upper triangular region.
         if i > j:
