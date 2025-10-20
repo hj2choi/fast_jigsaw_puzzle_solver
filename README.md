@@ -3,7 +3,7 @@
 - Splits an image into **N** (rows x columns) anonymized rectangular pieces with random orientations.
 - Reconstructs the **N** puzzle pieces back to original image in **O(N²)** time complexity.
 
-![demo_anim](https://hj2choi.github.io/images/external/jigsaw_puzzle_solver_2.gif)
+<img src="https://github.com/user-attachments/assets/89dd6583-fddf-4c1b-8cac-b87953466b3b" alt="jigsaw_puzzle_solver_demo" width="90%">
 
 *Disclaimer: The orientation of the reconstructed image may be random. Successful reconstruction is not always guaranteed.*
 
